@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700');
+@font-face {
+    font-family: "Chess";
+    src: url("chess.ttf");
+}
+
+html, body {
+    font-family: 'Open Sans', sans-serif;
+    background: #fafafa;
+    color: #202020;
+    margin: 0;
+}
+
+#title {
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+}
