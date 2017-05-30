@@ -3,7 +3,7 @@ window.addEventListener("load", init);
 let pieces = ["r", "kn", "b", "q", "k", "b", "kn", "r", "p"];
 let imgPieces = {};
 let boardColors = ["#eceed4", "#749654"];
-let board;
+let chessboard;
 let canvas, blockSize, ctx;
 let isWhitePlaying = true;
 let hoverPos = {x: -1, y: -1};
@@ -39,8 +39,8 @@ function loadImage(pieceIndex, color, cb) {
 }
 
 function canvasMouseMove(e) {
-    let newX = ~~(e.x / blockSize);
-    let newY = ~~(e.y / blockSize);
+    let newX = ~~(e.offsetX / blockSize);
+    let newY = ~~(e.offsetY / blockSize);
     if (newX != hoverPos.x || newY != hoverPos.y) {
         hoverPos.x = newX;
         hoverPos.y = newY;
@@ -49,6 +49,7 @@ function canvasMouseMove(e) {
 }
 
 function canvasMouseUp(e) {
+	console.log(e);
     clickedPos.x = hoverPos.x;
     clickedPos.y = hoverPos.y;
     draw();
@@ -61,10 +62,10 @@ function canvasMouseLeave() {
 }
 
 function initChessBoard() {
-    chessBoard = [];
+    chessboard = [];
     for (let x = 0; x < 8; x++) {
         for (let y = 0; y < 8; y++) {
-            if (chessBoard[y] === undefined) chessBoard[y] = [];
+            if (chessboard[y] === undefined) chessboard[y] = [];
             let piece;
             switch (y) {
                 case 0:
@@ -83,7 +84,7 @@ function initChessBoard() {
                     piece = "";
                     break;
             }
-            chessBoard[y].push(piece);
+            chessboard[y].push(piece);
         }
     }
 }
@@ -104,12 +105,13 @@ function drawBoardBackground() {
 
 function draw() {
     drawBoardBackground();
+	if (chessboard == undefined) return;
     ctx.save();
     ctx.font = blockSize + "px Chess";
     ctx.fillStyle = "#000";
     for (let x = 0; x < 8; x++) {
         for (let y = 0; y < 8; y++) {
-            let pieceToDraw = chessBoard[y][x];
+            let pieceToDraw = chessboard[y][x];
 
             // Hover/Clicked rectangle drawings
             if (hoverPos.x != -1 && hoverPos.y != -1 && (hoverPos.x != clickedPos.x || hoverPos.y != clickedPos.y)) {
