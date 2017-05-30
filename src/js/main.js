@@ -3,11 +3,13 @@ window.addEventListener("load", init);
 let pieces = ["r", "kn", "b", "q", "k", "b", "kn", "r", "p"];
 let imgPieces = {};
 let boardColors = ["#eceed4", "#749654"];
+let selectedColor = "#dc0000";
 let chessboard;
 let canvas, blockSize, ctx;
 let isWhitePlaying = true;
 let hoverPos = {x: -1, y: -1};
 let clickedPos = {x: -1, y: -1};
+let chessMoves, checkersMoves;
 
 function init() {
 
@@ -49,10 +51,13 @@ function canvasMouseMove(e) {
 }
 
 function canvasMouseUp(e) {
-	console.log(e);
-    clickedPos.x = hoverPos.x;
-    clickedPos.y = hoverPos.y;
-    draw();
+	if (hoverPos.x != -1 || hoverPos.y != -1) {
+		clickedPos.x = hoverPos.x;
+		clickedPos.y = hoverPos.y;
+		chessMoves = findChessMove(clickedPos.x, clickedPos.y);
+		checkersMoves = findCheckersMove(clickedPos.x, clickedPos.y);
+		draw();	
+	}
 }
 
 function canvasMouseLeave() {
@@ -122,7 +127,7 @@ function draw() {
             }
             if (clickedPos.x == x && clickedPos.y == y) {
                 ctx.save();
-                ctx.fillStyle = "rgb(220, 0, 0)";
+                ctx.fillStyle = selectedColor;
                 ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
                 ctx.restore();
             }
@@ -134,4 +139,19 @@ function draw() {
         }
     }
     ctx.restore();
+}
+
+function findChessMove(x, y) {
+	let piece = chessboard[y][x].slice(0, -1);
+	if (piece == "") return;
+	
+	console.log("Finding chess move for: " + piece);
+}
+
+function findCheckersMove(x, y) {
+	let piece = chessboard[y][x].slice(0, -1);
+	if (piece == "") return;
+	
+	// TODO.
+	return null;
 }
