@@ -1,12 +1,8 @@
 window.addEventListener("load", init);
 
-let boardColors = ["#ffce9e", "#d18b47"];
-
-// This is needed to setup the board and also to draw the correct pieces.
-let boardPieces = {rW: "r", knW: "h", bW: "b", qW: "q", kW: "k", pW: "p",
-                   rB: "t", knB: "j", bB: "n", qB: "w", kB: "l", pB: "o"};
-let whitePieces = ["rW", "knW", "bW", "qW", "kW", "bW", "knW", "rW"];
-let blackPieces = ["rB", "knB", "bB", "kB", "qB", "bB", "knB", "rB"];
+let pieces = ["r", "kn", "b", "q", "k", "b", "kn", "r", "p"];
+let imgPieces = {};
+let boardColors = ["#eceed4", "#749654"];
 let board;
 let canvas, blockSize, ctx;
 let isWhitePlaying = true;
@@ -20,10 +16,26 @@ function init() {
     canvas.addEventListener("mousemove", canvasMouseMove);
     canvas.addEventListener("mouseup", canvasMouseUp);
     canvas.addEventListener("mouseleave", canvasMouseLeave);
-    blockSize = canvas.width / 8;
     ctx = canvas.getContext("2d");
-    initChessBoard();
-    draw();
+    blockSize = canvas.width / 8;
+	
+	// Load images
+	loadImage(0, "w", function() {
+		initChessBoard();
+		draw();
+	});
+}
+
+function loadImage(pieceIndex, color, cb) {
+	let piece = pieces[pieceIndex % pieces.length] + color;
+	let img = new Image();
+	img.onload = function() {
+		pieceIndex++;
+		if (pieceIndex == 19) cb();
+		imgPieces[piece] = img;
+		loadImage(pieceIndex, pieceIndex <= 8 ? "w" : "b", cb)
+	};
+	img.src = "img/" + piece + ".png";
 }
 
 function canvasMouseMove(e) {
@@ -56,16 +68,16 @@ function initChessBoard() {
             let piece;
             switch (y) {
                 case 0:
-                    piece = isWhitePlaying ? blackPieces[x] : whitePieces[x];
+                    piece = pieces[x] + (isWhitePlaying ? "b" : "w");
                     break;
                 case 1:
-                    piece = isWhitePlaying ? "pB" : "pW";
+                    piece = pieces[pieces.length - 1] + (isWhitePlaying ? "b" : "w");
                     break;
                 case 6:
-                    piece = isWhitePlaying ? "pW" : "pB";
+                    piece = pieces[pieces.length - 1] + (isWhitePlaying ? "w" : "b");
                     break;
                 case 7:
-                    piece = isWhitePlaying ? whitePieces[x] : blackPieces[x];
+                    piece = pieces[x] + (isWhitePlaying ? "w" : "b");
                     break;
                 default:
                     piece = "";
@@ -102,7 +114,7 @@ function draw() {
             // Hover/Clicked rectangle drawings
             if (hoverPos.x != -1 && hoverPos.y != -1 && (hoverPos.x != clickedPos.x || hoverPos.y != clickedPos.y)) {
                 ctx.save();
-                ctx.globalAlpha = 0.2;
+                ctx.globalAlpha = 0.02;
                 ctx.fillRect(hoverPos.x * blockSize, hoverPos.y * blockSize, blockSize, blockSize);
                 ctx.restore();
             }
@@ -115,14 +127,8 @@ function draw() {
 
             // Check if we can draw piece
             if (pieceToDraw != "") {
-                let txt = boardPieces[pieceToDraw];
-                let textWidth = ctx.measureText(txt).width;
-
-                // Draw piece as text
-                ctx.fillText(txt,
-                    x * blockSize + (blockSize - textWidth) / 2,
-                    (y + 1) * blockSize + (blockSize - textWidth) / 2);
-            }
+				ctx.drawImage(imgPieces[pieceToDraw], x * blockSize, y * blockSize); // Draw image
+			}
         }
     }
     ctx.restore();
