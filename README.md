@@ -1,2 +1,2 @@
-# sjadamm-js
-Sjadamm (Chess + Checkers) made using JS!
+# sjadam-js
+Sjadam (Chess + Checkers) made using JS!

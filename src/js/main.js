@@ -9,7 +9,8 @@ let canvas, blockSize, ctx;
 let isWhitePlaying = true;
 let hoverPos = {x: -1, y: -1};
 let clickedPos = {x: -1, y: -1};
-let chessMoves, checkersMoves;
+let chessMoves, sjadammMoves;
+let sjadammPiece = {x: -1, y: -1, piece: ""};
 
 function init() {
 
@@ -20,7 +21,7 @@ function init() {
     canvas.addEventListener("mouseleave", canvasMouseLeave);
     ctx = canvas.getContext("2d");
     blockSize = canvas.width / 8;
-	
+
 	// Load images
 	loadImage(0, "w", function() {
 		initChessBoard();
@@ -51,12 +52,12 @@ function canvasMouseMove(e) {
 }
 
 function canvasMouseUp(e) {
-	if (hoverPos.x != -1 || hoverPos.y != -1) {
+	if ((hoverPos.x != -1 || hoverPos.y != -1) && (clickedPos.x != hoverPos.x || clickedPos.y != hoverPos.y)) {
 		clickedPos.x = hoverPos.x;
 		clickedPos.y = hoverPos.y;
-		chessMoves = findChessMove(clickedPos.x, clickedPos.y);
-		checkersMoves = findCheckersMove(clickedPos.x, clickedPos.y);
-		draw();	
+		chessMoves = findChessMoves(clickedPos.x, clickedPos.y);
+		sjadammMoves = findSjadammMoves(clickedPos.x, clickedPos.y, e.button == 2);
+		draw();
 	}
 }
 
@@ -141,17 +142,32 @@ function draw() {
     ctx.restore();
 }
 
-function findChessMove(x, y) {
-	let piece = chessboard[y][x].slice(0, -1);
-	if (piece == "") return;
-	
-	console.log("Finding chess move for: " + piece);
+function getPiece(x, y) {
+    let piece = chessboard[y][x].slice(0, -1);
+    if (piece != "") return piece;
+    if (sjadammPiece.piece != "" && sjadammPiece.x == x && sjadammPiece.y == y) return sjadammPiece.piece;
+    return "";
 }
 
-function findCheckersMove(x, y) {
-	let piece = chessboard[y][x].slice(0, -1);
+function findChessMoves(x, y) {
+	let piece = getPiece(x, y);
 	if (piece == "") return;
-	
+
 	// TODO.
+    return null;
+}
+
+function findSjadammMoves(x, y, rightclick) {
+	let piece = getPiece(x, y);
+	if (piece == "") return;
+
+    console.log("Finding sjadamm move for: ", piece, ", was rightclick: " + rightclick);
+
+    // Check neighbours
+    for (let x = -1; x <= 1; x++) {
+        for (let y = -1; y <= 1; y++) {
+
+        }
+    }
 	return null;
 }
