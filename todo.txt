@@ -1,0 +1,5 @@
+- Rokade
+- Kan kun hoppe over 1 motstander
+- Alle brikker blir til queen dersom brikken kommer seg over til motstanderens
+  side.
+- En passant (???) (https://en.wikipedia.org/wiki/Chess#En_passant)

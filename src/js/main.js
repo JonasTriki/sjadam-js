@@ -3,8 +3,7 @@ window.addEventListener("load", init);
 let pieces = ["r", "kn", "b", "q", "k", "b", "kn", "r", "p"];
 let imgPieces = {};
 let boardColors = ["#eceed4", "#749654"];
-let selectedColor = "#dc0000";
-let sjadamMoveColor = "#0068dc";
+let selectedColor = "#dc0000", sjadamMoveColor = "#0068dc", chessMoveColor= "#a100dc";
 let chessboard;
 let canvas, blockSize, ctx;
 let turnSpan;
@@ -49,6 +48,7 @@ function canvasMouseMove(e) {
     let newX = ~~(e.offsetX / blockSize);
     let newY = ~~(e.offsetY / blockSize);
     if (newX != hoverPos.x || newY != hoverPos.y) {
+        document.title = "(" + newX + "," + newY + ")";
         hoverPos.x = newX;
         hoverPos.y = newY;
         draw();
@@ -73,7 +73,7 @@ function canvasMouseUp(e) {
 	if ((hoverPos.x != -1 || hoverPos.y != -1) && (clickedPos.x != hoverPos.x || clickedPos.y != hoverPos.y)) {
 
         // Check if we can select the piece (right color).
-        let piece = chessboard[hoverPos.y][hoverPos.x];
+        let piece = chessboard[hoverPos.y][hoverPos.x].piece;
         let color = piece.slice(-1);
         if ((isWhiteTurn && color != "" && color != "w") || (!isWhiteTurn && color != "" && color != "b")) return;
 
@@ -121,7 +121,7 @@ function printBoard() {
         console.log("-".repeat(32));
         let str = "";
         for (let x = 0; x < 8; x++) {
-            str += (chessboard[y][x] == "" ? "   " : ("   " + chessboard[y][x]).slice(-3)) + "|";
+            str += (chessboard[y][x].piece == "" ? "   " : ("   " + chessboard[y][x].piece).slice(-3)) + "|";
         }
         console.log(str);
     }
@@ -150,7 +150,7 @@ function initChessBoard() {
                     piece = "";
                     break;
             }
-            chessboard[y].push(piece);
+            chessboard[y].push({piece: piece, hasMoved: false});
         }
     }
 }
@@ -177,7 +177,7 @@ function draw() {
     ctx.fillStyle = "#000";
     for (let x = 0; x < 8; x++) {
         for (let y = 0; y < 8; y++) {
-            let pieceToDraw = chessboard[y][x];
+            let pieceToDraw = chessboard[y][x].piece;
 
             // Hover/Clicked rectangle drawings
             if (hoverPos.x != -1 && hoverPos.y != -1 && (hoverPos.x != clickedPos.x || hoverPos.y != clickedPos.y)) {
@@ -202,6 +202,16 @@ function draw() {
                     ctx.restore();
                 }
             }
+            if (chessMoves.length > 0) {
+                for (let i = 0; i < chessMoves.length; i++) {
+                    let move = chessMoves[i];
+                    ctx.save();
+                    ctx.globalAlpha = 0.02;
+                    ctx.fillStyle = chessMoveColor;
+                    ctx.fillRect(move.x * blockSize, move.y * blockSize, blockSize, blockSize);
+                    ctx.restore();
+                }
+            }
 
             // Check if we can draw piece
             if (pieceToDraw != "") {
@@ -213,7 +223,7 @@ function draw() {
 }
 
 function getPiece(x, y) {
-    let piece = chessboard[y][x].slice(0, -1);
+    let piece = chessboard[y][x].piece.slice(0, -1);
     if (piece != "") return piece;
     if (sjadamPiece.piece != "" && sjadamPiece.x == x && sjadamPiece.y == y) return sjadamPiece.piece;
     return "";
@@ -221,8 +231,10 @@ function getPiece(x, y) {
 
 function movePiece(x, y, dX, dY) {
     if (!isValidPos(x, y) || !isValidPos(dX, dY)) return;
-    chessboard[dY][dX] = chessboard[y][x];
-    chessboard[y][x] = "";
+    chessboard[dY][dX].piece = chessboard[y][x].piece;
+    chessboard[dY][dX].hasMoved = true;
+    chessboard[y][x].piece = "";
+    chessboard[y][x].hasMoved = false;
     draw();
 }
 
@@ -230,30 +242,107 @@ function isValidPos(x, y) {
     return x >= 0 && x < 8 && y >= 0 && y < 8;
 }
 
+function canAttackPiece(x, y) {
+    let color = chessboard[y][x].piece.slice(-1);
+    return color == "" || (isWhiteTurn ? color == "b" : color == "w");
+}
+
+function findMoves(x, y, directions, once) {
+    let moves = [];
+    let piece = chessboard[y][x];
+    for (let i = 0; i < directions.length; i++) {
+        let dir = directions[i];
+        let hitPiece = false;
+        let nextPos = {x: x + dir.x, y: y + dir.y};
+        while (!hitPiece && isValidPos(nextPos.x, nextPos.y) && canAttackPiece(nextPos.x, nextPos.y)) {
+            if (dir.condition != null) {
+                if (dir.condition.hasMoved != null) {
+                    if (dir.condition.hasMoved != piece.hasMoved) break;
+                }
+                if (dir.condition.pieceExists != null) {
+                    if (dir.condition.pieceExists) {
+                        if (chessboard[nextPos.y][nextPos.x].piece == "") break;
+                    } else {
+                        if (chessboard[nextPos.y][nextPos.x].piece != "") break;
+                    }
+                }
+            }
+            moves.push({x: nextPos.x, y: nextPos.y});
+            hitPiece = chessboard[nextPos.y][nextPos.x].piece != "";
+            nextPos.x += dir.x;
+            nextPos.y += dir.y;
+            if (once) break;
+        }
+    }
+    return moves;
+}
+
+function rookMoves(x, y) {
+    return findMoves(x, y, [{x: 0, y: -1}, {x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}], false);
+}
+
+function knightMoves(x, y) {
+    return findMoves(x, y, [{x: 1, y: -2}, {x: 2, y: -1},
+                            {x: 2, y: 1}, {x: 1, y: 2},
+                            {x: -1, y: 2}, {x: -2, y: 1},
+                            {x: -2, y: -1}, {x: -1, y: -2}], true);
+}
+
+function bishopMoves(x, y) {
+    return findMoves(x, y, [{x: -1, y: -1}, {x: 1, y: -1}, {x: 1, y: 1}, {x: -1, y: 1}], false);
+}
+
+function queenMoves(x, y) {
+    return rookMoves(x, y).concat(bishopMoves(x, y));
+}
+
+function kingMoves(x, y) {
+    return findMoves(x, y, [{x: 0, y: -1}, {x: 1, y: -1}, {x: 1, y: 0},
+                            {x: 1, y: 1}, {x: 0, y: 1}, {x: -1, y: 1},
+                            {x: -1, y: 0}, {x: -1, y: -1}], true);
+}
+
+function pawnMoves(x, y) {
+    let move = isWhiteTurn ? -1 : 1;
+    return findMoves(x, y, [{x: 0, y: move, condition: {pieceExists: false}},
+                            {x: 0, y: 2 * move, condition: {hasMoved: false}},
+                            {x: -1, y: move, condition: {pieceExists: true}},
+                            {x: 1, y: move, condition: {pieceExists: true}}], true);
+}
+
 function findChessMoves(x, y) {
 	let piece = getPiece(x, y);
 	if (piece == "") return [];
 
-	// TODO.
-    let moves = [];
-    return moves;
+    switch (piece) {
+        case "r":
+            return rookMoves(x, y);
+        case "kn":
+            return knightMoves(x, y);
+        case "b":
+            return bishopMoves(x, y);
+        case "q":
+            return queenMoves(x, y);
+        case "k":
+            return kingMoves(x, y);
+        case "p":
+            return pawnMoves(x, y);
+    }
 }
 
 function findSjadamMoves(x, y) {
 	let piece = getPiece(x, y);
 	if (piece == "") return [];
 
-    console.log("Finding sjadam move for: ", piece);
-
     // Check neighbours and search for valid sjadam jumps.
     let moves = [];
     for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
             let nPos = {x: x + i, y: y + j};
-            if ((i != 0 || j != 0) && isValidPos(nPos.x, nPos.y) && chessboard[nPos.y][nPos.x] != "") {
+            if ((i != 0 || j != 0) && isValidPos(nPos.x, nPos.y) && chessboard[nPos.y][nPos.x].piece != "") {
                 let moveTo = {x: nPos.x + i, y: nPos.y + j};
                 if (!isValidPos(moveTo.x, moveTo.y)) continue;
-                if (chessboard[moveTo.y][moveTo.x] == "") moves.push(moveTo);
+                if (chessboard[moveTo.y][moveTo.x].piece == "") moves.push(moveTo);
             }
         }
     }
