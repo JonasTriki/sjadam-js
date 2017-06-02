@@ -59,6 +59,10 @@ function checkPos(a) {
     return a.x == hoverPos.x && a.y == hoverPos.y;
 }
 
+function hasSjadamPieceMoved() {
+    return sjadamPiece.x != sjadamPiece.dX || sjadamPiece.y != sjadamPiece.dY;
+}
+
 function switchTurn() {
     isWhiteTurn = !isWhiteTurn;
     turnSpan.innerHTML = isWhiteTurn ? "White" : "Black";
@@ -75,21 +79,22 @@ function canvasMouseUp(e) {
         // Check if we can select the piece (right color).
         let piece = chessboard[hoverPos.y][hoverPos.x].piece;
         let color = piece.slice(-1);
-        if ((isWhiteTurn && color != "" && color != "w") || (!isWhiteTurn && color != "" && color != "b")) return;
+        let isOpponent = (isWhiteTurn && color != "" && color != "w") || (!isWhiteTurn && color != "" && color != "b");
 
         // Check if we are clicking on a move, and move if possible.
         let canDoChessMove = chessMoves.filter(checkPos).length;
         let canDoSjadamMove = sjadamMoves.filter(checkPos).length;
-        let canChangePiece = (sjadamPiece.x == -1 && sjadamPiece.y == -1) || (sjadamPiece.x == sjadamPiece.dX && sjadamPiece.y == sjadamPiece.dY);
+        let canChangePiece = (sjadamPiece.x == -1 && sjadamPiece.y == -1) || (!hasSjadamPieceMoved());
         let moved = false;
         if (canDoChessMove || canDoSjadamMove)  {
             movePiece(clickedPos.x, clickedPos.y, hoverPos.x, hoverPos.y);
             moved = true;
-            if (e.button == 0) {
+            if (e.button == 2 || canDoChessMove) {
                 switchTurn();
                 return;
             }
         } else {
+            if (isOpponent) return;
 
             // Check if we can select a piece. We cannot change the piece if we have moved the current one.
             if (canChangePiece) {
@@ -100,12 +105,18 @@ function canvasMouseUp(e) {
                 if (piece != sjadamPiece.piece) return;
             }
         }
+        if (!moved && isOpponent) return;
+
         clickedPos.x = hoverPos.x;
         clickedPos.y = hoverPos.y;
         sjadamPiece.dX = clickedPos.x;
         sjadamPiece.dY = clickedPos.y;
         chessMoves = findChessMoves(sjadamPiece.dX, sjadamPiece.dY);
-        sjadamMoves = findSjadamMoves(sjadamPiece.dX, sjadamPiece.dY);
+        if (!canDoSjadamMove || (!hasSjadamPieceMoved() || !isOpponent)) {
+            sjadamMoves = findSjadamMoves(sjadamPiece.dX, sjadamPiece.dY);
+        } else {
+            sjadamMoves = [];
+        }
         draw();
 	}
 }
@@ -232,7 +243,7 @@ function getPiece(x, y) {
 function movePiece(x, y, dX, dY) {
     if (!isValidPos(x, y) || !isValidPos(dX, dY)) return;
     chessboard[dY][dX].piece = chessboard[y][x].piece;
-    chessboard[dY][dX].hasMoved = true;
+    chessboard[dY][dX].hasMoved = (sjadamPiece.x != dX || sjadamPiece.y != dY);
     chessboard[y][x].piece = "";
     chessboard[y][x].hasMoved = false;
     draw();
@@ -333,6 +344,7 @@ function findChessMoves(x, y) {
 function findSjadamMoves(x, y) {
 	let piece = getPiece(x, y);
 	if (piece == "") return [];
+    console.log(chessboard[y][x]);
 
     // Check neighbours and search for valid sjadam jumps.
     let moves = [];
