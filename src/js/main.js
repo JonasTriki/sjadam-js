@@ -12,7 +12,7 @@ let isWhiteTurn = true;
 let hoverPos = {x: -1, y: -1};
 let clickedPos = {x: -1, y: -1};
 let chessMoves = [], sjadamMoves = [];
-let sjadamPiece = {x: -1, y: -1, dX: -1, dY: -1, opponentJumps: 0, piece: ""};
+let sjadamPiece = {x: -1, y: -1, dX: -1, dY: -1, hasJumpedOpponent: false, prevJump: null, piece: ""};
 
 function init() {
 
@@ -63,62 +63,85 @@ function hasSjadamPieceMoved() {
     return sjadamPiece.x != sjadamPiece.dX || sjadamPiece.y != sjadamPiece.dY;
 }
 
-function switchTurn() {
-    isWhiteTurn = !isWhiteTurn;
-    turnSpan.innerHTML = isWhiteTurn ? "White" : "Black";
+function clearPiece() {
     chessMoves = [];
     sjadamMoves = [];
     clickedPos = {x: -1, y: -1};
-    sjadamPiece = {x: -1, y: -1, dX: -1, dY: -1, opponentJumps: 0, piece: ""};
+    sjadamPiece = {x: -1, y: -1, dX: -1, dY: -1, hasJumpedOpponent: false, prevJump: null, piece: ""};
+}
+
+function switchTurn() {
+    isWhiteTurn = !isWhiteTurn;
+    turnSpan.innerHTML = isWhiteTurn ? "White" : "Black";
+    clearPiece();
     draw();
 }
 
+function isPieceOpponent(piece) {
+    let color = piece.slice(-1);
+    return color != "" && ((isWhiteTurn && color != "w") || (!isWhiteTurn && color != "b"));
+}
+
 function canvasMouseUp(e) {
-	if ((hoverPos.x != -1 || hoverPos.y != -1) && (clickedPos.x != hoverPos.x || clickedPos.y != hoverPos.y)) {
+    if (hoverPos.x == -1 && hoverPos.y == -1) return;
 
-        // Check if we can select the piece (right color).
-        let piece = chessboard[hoverPos.y][hoverPos.x].piece;
-        let color = piece.slice(-1);
-        let isOpponent = (isWhiteTurn && color != "" && color != "w") || (!isWhiteTurn && color != "" && color != "b");
-
-        // Check if we are clicking on a move, and move if possible.
-        let canDoChessMove = chessMoves.filter(checkPos).length;
-        let canDoSjadamMove = sjadamMoves.filter(checkPos).length;
-        let canChangePiece = (sjadamPiece.x == -1 && sjadamPiece.y == -1) || (!hasSjadamPieceMoved());
-        let moved = false;
-        if (canDoChessMove || canDoSjadamMove)  {
-            movePiece(clickedPos.x, clickedPos.y, hoverPos.x, hoverPos.y);
-            moved = true;
-            if (e.button == 2 || canDoChessMove) {
-                switchTurn();
-                return;
-            }
-        } else {
-            if (isOpponent) return;
-
-            // Check if we can select a piece. We cannot change the piece if we have moved the current one.
-            if (canChangePiece) {
-                sjadamPiece.x = hoverPos.x;
-                sjadamPiece.y = hoverPos.y;
-                sjadamPiece.piece = piece;
-            } else {
-                if (piece != sjadamPiece.piece) return;
-            }
-        }
-        if (!moved && isOpponent) return;
-
-        clickedPos.x = hoverPos.x;
-        clickedPos.y = hoverPos.y;
-        sjadamPiece.dX = clickedPos.x;
-        sjadamPiece.dY = clickedPos.y;
-        chessMoves = findChessMoves(sjadamPiece.dX, sjadamPiece.dY);
-        if (!canDoSjadamMove || (!hasSjadamPieceMoved() || !isOpponent)) {
-            sjadamMoves = findSjadamMoves(sjadamPiece.dX, sjadamPiece.dY);
-        } else {
-            sjadamMoves = [];
-        }
+    // Check if we are clicking the same piece as we selected and piece not moved
+    // ==> We deselect the piece.
+    if (clickedPos.x == hoverPos.x && clickedPos.y == hoverPos.y && !hasSjadamPieceMoved()) {
+        clearPiece();
         draw();
-	}
+        return;
+    }
+
+    // Check if we can select the piece (right color).
+    let piece = chessboard[hoverPos.y][hoverPos.x].piece;
+    let isOpponent = isPieceOpponent(piece);
+
+    // Check if we are clicking on a move, and move if possible.
+    let canDoChessMove = chessMoves.filter(checkPos).length;
+    let canDoSjadamMove = sjadamMoves.filter(checkPos).length;
+    let canChangePiece = (sjadamPiece.x == -1 && sjadamPiece.y == -1) || !hasSjadamPieceMoved();
+    if (canDoChessMove || canDoSjadamMove)  {
+        movePiece(clickedPos.x, clickedPos.y, hoverPos.x, hoverPos.y);
+        if (e.button == 2 || canDoChessMove) {
+            switchTurn();
+            return;
+        }
+        
+        // Check if we have jumped over an opponent piece.
+        if (canDoSjadamMove) {
+            let sjadamMove = sjadamMoves.filter(checkPos)[0];
+            sjadamPiece.prevJump = {x: clickedPos.x, y: clickedPos.y};
+            sjadamPiece.hasJumpedOpponent = sjadamMove.isOpponent;
+            console.log("Is opponent: ", sjadamMoves);
+        }
+    } else {
+
+        // Check if we can select a piece. We cannot change the piece if it is
+        // an opponent or if we have moved the current one.
+        if (isOpponent || !canChangePiece) return;
+
+        // Change sjadam piece.
+        sjadamPiece.x = hoverPos.x;
+        sjadamPiece.y = hoverPos.y;
+        sjadamPiece.piece = piece;
+    }
+
+    // Set clicked position to draw and sjadam piece destination position.
+    clickedPos.x = hoverPos.x;
+    clickedPos.y = hoverPos.y;
+    sjadamPiece.dX = clickedPos.x;
+    sjadamPiece.dY = clickedPos.y;
+
+    // Find chess and sjadammoves (if possible; can only find previous if we have jumped an opponent.)
+    chessMoves = findChessMoves(sjadamPiece.dX, sjadamPiece.dY);
+    if (!sjadamPiece.hasJumpedOpponent) {
+        sjadamMoves = findSjadamMoves(sjadamPiece.dX, sjadamPiece.dY);
+    } else {
+        sjadamMoves = [sjadamPiece.prevJump];
+    }
+
+    draw();
 }
 
 function canvasMouseLeave() {
@@ -344,7 +367,6 @@ function findChessMoves(x, y) {
 function findSjadamMoves(x, y) {
 	let piece = getPiece(x, y);
 	if (piece == "") return [];
-    console.log(chessboard[y][x]);
 
     // Check neighbours and search for valid sjadam jumps.
     let moves = [];
@@ -352,7 +374,8 @@ function findSjadamMoves(x, y) {
         for (let j = -1; j <= 1; j++) {
             let nPos = {x: x + i, y: y + j};
             if ((i != 0 || j != 0) && isValidPos(nPos.x, nPos.y) && chessboard[nPos.y][nPos.x].piece != "") {
-                let moveTo = {x: nPos.x + i, y: nPos.y + j};
+                let moveTo = {x: nPos.x + i, y: nPos.y + j,
+                    isOpponent: isPieceOpponent(chessboard[nPos.y][nPos.x].piece)};
                 if (!isValidPos(moveTo.x, moveTo.y)) continue;
                 if (chessboard[moveTo.y][moveTo.x].piece == "") moves.push(moveTo);
             }
