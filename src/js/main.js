@@ -7,6 +7,8 @@ let selectedColor = "#dc0000", sjadamMoveColor = "#0068dc", chessMoveColor= "#a1
 let chessboard;
 let canvas, blockSize, ctx;
 let turnSpan;
+let isPlaying = true;
+let colorWon;
 let isWhitePlaying = true;
 let isWhiteTurn = true;
 let hoverPos = {x: -1, y: -1};
@@ -72,7 +74,11 @@ function clearPiece() {
 
 function switchTurn() {
     isWhiteTurn = !isWhiteTurn;
-    turnSpan.innerHTML = isWhiteTurn ? "White" : "Black";
+    if (!isPlaying && colorWon != "") {
+        turnSpan.innerHTML = colorWon + " won the match!";
+    } else {
+        turnSpan.innerHTML = (isWhiteTurn ? "White" : "Black") + "'s turn.";
+    }
     clearPiece();
     draw();
 }
@@ -83,6 +89,7 @@ function isPieceOpponent(piece) {
 }
 
 function canvasMouseUp(e) {
+    if (!isPlaying) return;
     if (hoverPos.x == -1 && hoverPos.y == -1) return;
 
     // Check if we are clicking the same piece as we selected and piece not moved
@@ -107,7 +114,7 @@ function canvasMouseUp(e) {
             switchTurn();
             return;
         }
-        
+
         // Check if we have jumped over an opponent piece.
         if (canDoSjadamMove) {
             let sjadamMove = sjadamMoves.filter(checkPos)[0];
@@ -263,12 +270,36 @@ function getPiece(x, y) {
     return "";
 }
 
+function checkKing(moveX, moveY) {
+    let destPiece = chessboard[moveY][moveX].piece;
+    if (destPiece.length == 2 && destPiece.charAt(0) == "k") {
+        isPlaying = false;
+        colorWon = destPiece.slice(-1) == "w" ? "Black" : "White";
+        switchTurn();
+    }
+}
+
+function checkQueen(moveX, moveY, piece) {
+    if (piece.charAt(0) == "q") return false;
+    // TODO: Check if we are converting to queen
+}
+
 function movePiece(x, y, dX, dY) {
     if (!isValidPos(x, y) || !isValidPos(dX, dY)) return;
-    chessboard[dY][dX].piece = chessboard[y][x].piece;
+
+    // Check if we are taking the king => winning.
+    checkKing(dX, dY);
+
+    // Check if we should change piece to queen.
+    let convertToQueen = checkQueen(dX, dY, chessboard[y][x].piece);
+
+    // Move piece
+    chessboard[dY][dX].piece = convertToQueen ? "q" + chessboard[y][x].piece.slice(-1) : chessboard[y][x].piece;
     chessboard[dY][dX].hasMoved = (sjadamPiece.x != dX || sjadamPiece.y != dY);
     chessboard[y][x].piece = "";
     chessboard[y][x].hasMoved = false;
+
+    // Redraw new stuff
     draw();
 }
 
