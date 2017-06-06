@@ -331,10 +331,11 @@ function findMoves(x, y, directions, once) {
                     if (dir.condition.hasMoved != piece.hasMoved) break;
                 }
                 if (dir.condition.pieceExists != null) {
+                    let nextPiece = chessboard[nextPos.y][nextPos.x].piece;
                     if (dir.condition.pieceExists) {
-                        if (chessboard[nextPos.y][nextPos.x].piece == "") break;
+                        if (nextPiece == "") return moves;
                     } else {
-                        if (chessboard[nextPos.y][nextPos.x].piece != "") break;
+                        if (nextPiece != "") return moves;
                     }
                 }
             }
@@ -376,7 +377,7 @@ function kingMoves(x, y) {
 function pawnMoves(x, y) {
     let move = isWhiteTurn ? -1 : 1;
     return findMoves(x, y, [{x: 0, y: move, condition: {pieceExists: false}},
-                            {x: 0, y: 2 * move, condition: {hasMoved: false}},
+                            {x: 0, y: 2 * move, condition: {pieceExists: false, hasMoved: false}},
                             {x: -1, y: move, condition: {pieceExists: true}},
                             {x: 1, y: move, condition: {pieceExists: true}}], true);
 }
