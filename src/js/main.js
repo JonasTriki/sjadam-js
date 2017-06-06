@@ -111,6 +111,7 @@ function canvasMouseUp(e) {
     if (canDoChessMove || canDoSjadamMove)  {
         movePiece(clickedPos.x, clickedPos.y, hoverPos.x, hoverPos.y);
         if (e.button == 2 || canDoChessMove) {
+            checkQueen(hoverPos.x, hoverPos.y);
             switchTurn();
             return;
         }
@@ -279,9 +280,17 @@ function checkKing(moveX, moveY) {
     }
 }
 
-function checkQueen(moveX, moveY, piece) {
-    if (piece.charAt(0) == "q") return false;
-    // TODO: Check if we are converting to queen
+function checkQueen(moveX, moveY) {
+    let piece = chessboard[moveY][moveX].piece;
+    if (piece.charAt(0) == "q" || (piece.charAt(0) == "k" && piece.length == 2)) return;
+
+    // Find color and check if we should convert to queen
+    let color = piece.slice(-1);
+    let convertToQueen = (isWhiteTurn && moveY == 0) || (!isWhiteTurn && moveY == 7);
+    if (!convertToQueen) return;
+
+    // Convert piece to queen
+    chessboard[moveY][moveX].piece = "q" + color;
 }
 
 function movePiece(x, y, dX, dY) {
@@ -290,11 +299,8 @@ function movePiece(x, y, dX, dY) {
     // Check if we are taking the king => winning.
     checkKing(dX, dY);
 
-    // Check if we should change piece to queen.
-    let convertToQueen = checkQueen(dX, dY, chessboard[y][x].piece);
-
     // Move piece
-    chessboard[dY][dX].piece = convertToQueen ? "q" + chessboard[y][x].piece.slice(-1) : chessboard[y][x].piece;
+    chessboard[dY][dX].piece = chessboard[y][x].piece;
     chessboard[dY][dX].hasMoved = (sjadamPiece.x != dX || sjadamPiece.y != dY);
     chessboard[y][x].piece = "";
     chessboard[y][x].hasMoved = false;

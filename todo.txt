@@ -1,5 +1,2 @@
-- Alle brikker blir til queen dersom brikken kommer seg over til motstanderens
-  side.
-----------------------------------------------------------------------
 - Rokade
 - En passant (???) (https://en.wikipedia.org/wiki/Chess#En_passant)
