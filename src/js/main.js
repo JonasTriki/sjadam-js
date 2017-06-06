@@ -74,11 +74,7 @@ function clearPiece() {
 
 function switchTurn() {
     isWhiteTurn = !isWhiteTurn;
-    if (!isPlaying && colorWon != "") {
-        turnSpan.innerHTML = colorWon + " won the match!";
-    } else {
-        turnSpan.innerHTML = (isWhiteTurn ? "White" : "Black") + "'s turn.";
-    }
+    turnSpan.innerHTML = (isWhiteTurn ? "White" : "Black") + "'s turn.";
     clearPiece();
     draw();
 }
@@ -211,11 +207,30 @@ function drawBoardBackground() {
     ctx.restore();
 }
 
+function drawFinishScreen() {
+    if (isPlaying) return;
+    ctx.save();
+
+    // Draw faded background
+    ctx.fillStyle = "#000";
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#fff";
+    ctx.font = "25px Open Sans";
+    let str = colorWon + " won the match!";
+    let strW = ctx.measureText(str).width;
+    let strH = ctx.measureText("W").width;
+    ctx.fillText(colorWon + " won the match!", ~~((canvas.width - strW) / 2), strH + ~~((canvas.height - strH) / 2));
+    ctx.restore();
+}
+
 function draw() {
     drawBoardBackground();
 	if (chessboard == undefined) return;
     ctx.save();
-    ctx.font = blockSize + "px Chess";
+    ctx.font = blockSize + "px Open Sans";
     ctx.fillStyle = "#000";
     for (let x = 0; x < 8; x++) {
         for (let y = 0; y < 8; y++) {
@@ -262,6 +277,7 @@ function draw() {
         }
     }
     ctx.restore();
+    drawFinishScreen();
 }
 
 function getPiece(x, y) {
@@ -333,9 +349,18 @@ function findMoves(x, y, directions, once) {
                 if (dir.condition.pieceExists != null) {
                     let nextPiece = chessboard[nextPos.y][nextPos.x].piece;
                     if (dir.condition.pieceExists) {
-                        if (nextPiece == "") return moves;
+                        if (nextPiece == "") break;
                     } else {
-                        if (nextPiece != "") return moves;
+                        let prevPieceCond = false;
+                        if (dir.condition.prevPieceExists != null) {
+                            let onePieceBack = chessboard[nextPos.y + (isWhiteTurn ? 1 : -1)][nextPos.x].piece;
+                            if (dir.condition.prevPieceExists) {
+                                prevPieceCond = onePieceBack == "";
+                            } else {
+                                prevPieceCond = onePieceBack != "";
+                            }
+                        }
+                        if (nextPiece != "" || prevPieceCond) return moves;
                     }
                 }
             }
@@ -377,7 +402,7 @@ function kingMoves(x, y) {
 function pawnMoves(x, y) {
     let move = isWhiteTurn ? -1 : 1;
     return findMoves(x, y, [{x: 0, y: move, condition: {pieceExists: false}},
-                            {x: 0, y: 2 * move, condition: {pieceExists: false, hasMoved: false}},
+                            {x: 0, y: 2 * move, condition: {pieceExists: false, prevPieceExists: false, hasMoved: false}},
                             {x: -1, y: move, condition: {pieceExists: true}},
                             {x: 1, y: move, condition: {pieceExists: true}}], true);
 }
