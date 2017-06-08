@@ -117,7 +117,6 @@ function canvasMouseUp(e) {
             let sjadamMove = sjadamMoves.filter(checkPos)[0];
             sjadamPiece.prevJump = {x: clickedPos.x, y: clickedPos.y};
             sjadamPiece.hasJumpedOpponent = sjadamMove.isOpponent;
-            console.log("Is opponent: ", sjadamMoves);
         }
     } else {
 
@@ -401,10 +400,10 @@ function kingMoves(x, y) {
 
 function pawnMoves(x, y) {
     let move = isWhiteTurn ? -1 : 1;
-    return findMoves(x, y, [{x: 0, y: move, condition: {pieceExists: false}},
-                            {x: 0, y: 2 * move, condition: {pieceExists: false, prevPieceExists: false, hasMoved: false}},
-                            {x: -1, y: move, condition: {pieceExists: true}},
-                            {x: 1, y: move, condition: {pieceExists: true}}], true);
+    return findMoves(x, y, [{x: -1, y: move, condition: {pieceExists: true}},
+                            {x: 1, y: move, condition: {pieceExists: true}},
+                            {x: 0, y: move, condition: {pieceExists: false}},
+                            {x: 0, y: 2 * move, condition: {pieceExists: false, prevPieceExists: false, hasMoved: false}}], true);
 }
 
 function findChessMoves(x, y) {
