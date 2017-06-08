@@ -378,7 +378,7 @@ function findMoves(x, y, directions, once) {
                     if (!empty) break;
 
                     // Set castling info for move.
-                    castling = {rookX: rookX, rookY: rookY, dX: (dir.x > 0 ? x + 1 : x - 1)};
+                    castling = {rookX: rookX, rookY: rookY, dX: x + incr};
                 }
                 if (dir.condition.pieceExists != null) {
                     let nextPiece = chessboard[nextPos.y][nextPos.x].piece;
