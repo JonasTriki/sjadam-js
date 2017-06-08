@@ -3,7 +3,7 @@ window.addEventListener("load", init);
 let pieces = ["r", "kn", "b", "q", "k", "b", "kn", "r", "p"];
 let imgPieces = {};
 let boardColors = ["#eceed4", "#749654"];
-let selectedColor = "#dc0000", sjadamMoveColor = "#0068dc", chessMoveColor= "#a100dc";
+let selectedColor = "#dc0000", sjadamMoveColor = "#0068dc", chessMoveColor= "#a100dc", castlingMoveColor = "#dc6a00";
 let chessboard;
 let canvas, blockSize, ctx;
 let turnSpan;
@@ -106,7 +106,17 @@ function canvasMouseUp(e) {
     let canChangePiece = (sjadamPiece.x == -1 && sjadamPiece.y == -1) || !hasSjadamPieceMoved();
     if (canDoChessMove || canDoSjadamMove)  {
         movePiece(clickedPos.x, clickedPos.y, hoverPos.x, hoverPos.y);
+        if (!isPlaying) return;
         if (e.button == 2 || canDoChessMove) {
+            if (canDoChessMove) {
+                let chessMove = chessMoves.filter(checkPos)[0];
+                if (chessMove.castling) {
+                    let cast = chessMove.castling;
+
+                    // Move rook
+                    movePiece(cast.rookX, cast.rookY, cast.dX, cast.rookY);
+                }
+            }
             checkQueen(hoverPos.x, hoverPos.y);
             switchTurn();
             return;
@@ -263,7 +273,7 @@ function draw() {
                     let move = chessMoves[i];
                     ctx.save();
                     ctx.globalAlpha = 0.02;
-                    ctx.fillStyle = chessMoveColor;
+                    ctx.fillStyle = move.castling ? castlingMoveColor : chessMoveColor;
                     ctx.fillRect(move.x * blockSize, move.y * blockSize, blockSize, blockSize);
                     ctx.restore();
                 }
@@ -341,9 +351,34 @@ function findMoves(x, y, directions, once) {
         let hitPiece = false;
         let nextPos = {x: x + dir.x, y: y + dir.y};
         while (!hitPiece && isValidPos(nextPos.x, nextPos.y) && canAttackPiece(nextPos.x, nextPos.y)) {
+            let castling;
             if (dir.condition != null) {
                 if (dir.condition.hasMoved != null) {
                     if (dir.condition.hasMoved != piece.hasMoved) break;
+                }
+                if (dir.condition.castling) {
+
+                    // Check if king has moved
+                    let rookY = isWhiteTurn ? 7 : 0;
+                    if (x != 4 || y != rookY) break;
+
+                    // Check if rook exists/has moved
+                    let rookX = dir.condition.rookX;
+                    if (chessboard[rookY][rookX].piece.charAt(0) != "r" || chessboard[rookY][rookX].hasMoved) break;
+
+                    // Check for empty fields
+                    let empty = true;
+                    let incr = (dir.x > 0 ? 1 : -1);
+                    for (let j = x + incr; j != rookX; j += incr) {
+                        if (chessboard[rookY][j].piece != "") {
+                            empty = false;
+                            break;
+                        }
+                    }
+                    if (!empty) break;
+
+                    // Set castling info for move.
+                    castling = {rookX: rookX, rookY: rookY, dX: (dir.x > 0 ? x + 1 : x - 1)};
                 }
                 if (dir.condition.pieceExists != null) {
                     let nextPiece = chessboard[nextPos.y][nextPos.x].piece;
@@ -363,7 +398,11 @@ function findMoves(x, y, directions, once) {
                     }
                 }
             }
-            moves.push({x: nextPos.x, y: nextPos.y});
+            if (!castling) {
+                moves.push({x: nextPos.x, y: nextPos.y});
+            } else {
+                moves.push({x: nextPos.x, y: nextPos.y, castling: castling});
+            }
             hitPiece = chessboard[nextPos.y][nextPos.x].piece != "";
             nextPos.x += dir.x;
             nextPos.y += dir.y;
@@ -395,7 +434,9 @@ function queenMoves(x, y) {
 function kingMoves(x, y) {
     return findMoves(x, y, [{x: 0, y: -1}, {x: 1, y: -1}, {x: 1, y: 0},
                             {x: 1, y: 1}, {x: 0, y: 1}, {x: -1, y: 1},
-                            {x: -1, y: 0}, {x: -1, y: -1}], true);
+                            {x: -1, y: 0}, {x: -1, y: -1},
+                            {x: 2, y: 0, condition: {hasMoved: false, castling: true, rookX: 7}},
+                            {x: -2, y: 0, condition: {hasMoved: false, castling: true, rookX: 0}}], true);
 }
 
 function pawnMoves(x, y) {

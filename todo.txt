@@ -1,2 +1,1 @@
-- Rokade
-- En passant (???) (https://en.wikipedia.org/wiki/Chess#En_passant)
+- En passant - https://en.wikipedia.org/wiki/Chess#En_passant
