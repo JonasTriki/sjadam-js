@@ -79,7 +79,7 @@ function loadSjadamatts(cb) {
     sjadammattsList.innerHTML = "";
     readFile("misc/sjadammatts.txt", function(content) {
         let lines = content.split("\n");
-        for (let i = lines.length -1; i >= 0; i--) {
+        for (let i = lines.length - 1; i >= 0; i--) {
             let line = lines[i];
             if (!isValidLine(line)) continue;
             sjadammatts.push(importGame(lines[i]));
@@ -452,6 +452,12 @@ function findMoves(x, y, directions, once) {
         while (!hitPiece && isValidPos(nextPos.x, nextPos.y) && canAttackPiece(nextPos.x, nextPos.y)) {
             let castling;
             if (dir.condition != null) {
+                if (dir.condition.initPos) {
+                    if (piece.piece.charAt(0) == "p") {
+                        let color = piece.piece.charAt(1);
+                        if ((color == "w" && y != 6) || (color == "b" && y != 1)) break;
+                    }
+                }
                 if (dir.condition.hasMoved != null) {
                     if (dir.condition.hasMoved != piece.hasMoved) break;
                 }
@@ -543,7 +549,7 @@ function pawnMoves(x, y) {
     return findMoves(x, y, [{x: -1, y: move, condition: {pieceExists: true}},
                             {x: 1, y: move, condition: {pieceExists: true}},
                             {x: 0, y: move, condition: {pieceExists: false}},
-                            {x: 0, y: 2 * move, condition: {pieceExists: false, prevPieceExists: false, hasMoved: false}}], true);
+                            {x: 0, y: 2 * move, condition: {pieceExists: false, prevPieceExists: false, hasMoved: false, initPos: true}}], true);
 }
 
 function findChessMoves(x, y) {
