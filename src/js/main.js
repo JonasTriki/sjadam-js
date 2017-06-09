@@ -1,12 +1,14 @@
 window.addEventListener("load", init);
 
-let pieces = ["r", "kn", "b", "q", "k", "b", "kn", "r", "p"];
+let pieces = ["r", "n", "b", "q", "k", "b", "n", "r", "p"];
 let imgPieces = {};
 let boardColors = ["#eceed4", "#749654"];
 let selectedColor = "#dc0000", sjadamMoveColor = "#0068dc", chessMoveColor= "#a100dc", castlingMoveColor = "#dc6a00";
 let chessboard;
 let canvas, blockSize, ctx;
 let turnSpan;
+let sjadammattsList;
+let btnLoadSjadammatt, btnReset;
 let isPlaying = true;
 let colorWon;
 let isWhitePlaying = true;
@@ -15,12 +17,30 @@ let hoverPos = {x: -1, y: -1};
 let clickedPos = {x: -1, y: -1};
 let chessMoves = [], sjadamMoves = [];
 let sjadamPiece = {x: -1, y: -1, dX: -1, dY: -1, hasJumpedOpponent: false, prevJump: null, piece: ""};
+let sjadammatts;
 
 function init() {
 
     // Load elements.
     turnSpan = document.querySelector("#turn");
     canvas = document.querySelector("#game");
+    sjadammattsList = document.querySelector("#sjadammatts");
+    btnLoadSjadammatt = document.querySelector("#loadSjadammatt");
+    btnLoadSjadammatt.addEventListener("click", function() {
+        let game = sjadammatts[sjadammattsList.selectedIndex];
+        chessboard = game.board;
+        isWhiteTurn = game.whitesTurn;
+        updateTurn();
+        clearPiece();
+        draw();
+    });
+    btnReset = document.querySelector("#reset");
+    btnReset.addEventListener("click", function () {
+        initChessBoard();
+        clearPiece();
+        isWhiteTurn = true;
+        updateTurn();
+    });
     canvas.addEventListener("mousemove", canvasMouseMove);
     canvas.addEventListener("mouseup", canvasMouseUp);
     canvas.addEventListener("mouseleave", canvasMouseLeave);
@@ -29,8 +49,9 @@ function init() {
 
 	// Load images
 	loadImage(0, "w", function() {
-		initChessBoard();
-		draw();
+
+        // Load sjadammatts
+        loadSjadamatts(initChessBoard);
 	});
 }
 
@@ -44,6 +65,28 @@ function loadImage(pieceIndex, color, cb) {
 		loadImage(pieceIndex, pieceIndex <= 8 ? "w" : "b", cb)
 	};
 	img.src = "img/" + piece + ".png";
+}
+
+function isValidLine(line) {
+    if (line == "") return false;
+    if (line.indexOf("/") == -1) return false;
+    if (line.indexOf(" ") == -1) return false;
+    return true;
+}
+
+function loadSjadamatts(cb) {
+    sjadammatts = [];
+    sjadammattsList.innerHTML = "";
+    readFile("misc/sjadammatts.txt", function(content) {
+        let lines = content.split("\n");
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            if (!isValidLine(line)) continue;
+            sjadammatts.push(importGame(lines[i]));
+            sjadammattsList.innerHTML += "<option>Day " + (i + 1) + "</option>";
+        }
+        cb();
+    });
 }
 
 function canvasMouseMove(e) {
@@ -72,9 +115,13 @@ function clearPiece() {
     sjadamPiece = {x: -1, y: -1, dX: -1, dY: -1, hasJumpedOpponent: false, prevJump: null, piece: ""};
 }
 
+function updateTurn() {
+    turnSpan.innerHTML = (isWhiteTurn ? "White" : "Black") + "'s turn.";
+}
+
 function switchTurn() {
     isWhiteTurn = !isWhiteTurn;
-    turnSpan.innerHTML = (isWhiteTurn ? "White" : "Black") + "'s turn.";
+    updateTurn();
     clearPiece();
     draw();
 }
@@ -174,6 +221,57 @@ function printBoard() {
     }
 }
 
+function readFile(file, cb) {
+    let xhr;
+    if (window.XMLHttpRequest) {
+        xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status == 200) {
+            cb(xhr.responseText);
+        }
+    };
+    xhr.open("GET", file);
+    xhr.send();
+}
+
+function importGame(game) {
+    // Example game: r2q2n1/p5pp/2p3k1/1p1R4/8/5P2/P1P1P3/2B3K1 w - - 0 1
+    let board = [];
+
+    // Split by spaces, we're only using the first 2 parts
+    let spaceParts = game.split(" ");
+    let parts =  spaceParts[0].split("/");
+    let whitesTurn = spaceParts[1] == "w";
+
+    // Go through all the parts and load em!
+    for (let y = 0; y < parts.length; y++) {
+        if (board[y] === undefined) board[y] = [];
+        let part = parts[y];
+
+        // Loop through all the fields
+        for (let j = 0; j < part.length; j++) {
+            let char = part[j];
+            if (isNaN(char)) {
+                let color = char.toUpperCase() == char ? "w" : "b";
+                board[y].push({piece: char.toLowerCase() + color, hasMoved: false});
+            } else {
+                for (let i = 0; i < char; i++) {
+                    board[y].push({piece: "", hasMoved: false});
+                }
+            }
+        }
+    }
+    return {whitesTurn: whitesTurn, board: board};
+}
+
+function exportGame() {
+
+}
+
 function initChessBoard() {
     chessboard = [];
     for (let x = 0; x < 8; x++) {
@@ -200,6 +298,7 @@ function initChessBoard() {
             chessboard[y].push({piece: piece, hasMoved: false});
         }
     }
+    draw();
 }
 
 function drawBoardBackground() {
@@ -454,7 +553,7 @@ function findChessMoves(x, y) {
     switch (piece) {
         case "r":
             return rookMoves(x, y);
-        case "kn":
+        case "n":
             return knightMoves(x, y);
         case "b":
             return bishopMoves(x, y);
