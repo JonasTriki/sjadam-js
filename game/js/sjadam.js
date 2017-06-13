@@ -18,6 +18,33 @@ class Sjadam {
         }
     }
 
+    getSelectedDay() {
+        let sel = document.querySelector(".item.day.selected");
+        if (sel == null) return -1;
+        let children = Array.prototype.slice.call(document.querySelector("#list").children);
+        return children.indexOf(sel);
+    }
+
+    loadCurrentSjadammatt(cb) {
+        let matt = this.sjadammatts[this.getSelectedDay()];
+        this.loadGame(matt, () => {
+            let isWhite = matt.startingColor == "w";
+            divPlayer.innerHTML = isWhite ? "White" : "Black";
+            divOpponent.innerHTML = isWhite ? "Black" : "White";
+            this.isPlaying = true;
+            if (cb != undefined) cb();
+        });
+    }
+
+    dayItemClicked(item) {
+        let sel = document.querySelector(".item.day.selected");
+        if (sel != null && sel != item) {
+            sel.classList.remove("selected");
+        }
+        item.classList.add("selected");
+        this.loadCurrentSjadammatt();
+    }
+
     addSjadammattDays() {
         this.clearListDivs();
         for (let i = 0; i < this.sjadammatts.length; i++) {
@@ -26,6 +53,7 @@ class Sjadam {
             item.className = "item day";
             if (i == 0) item.classList.add("selected"); // Select last day
             item.innerHTML = "Day " + day;
+            item.addEventListener("click", () => {this.dayItemClicked(item)});
             this.listDiv.appendChild(item);
         }
     }
@@ -43,19 +71,19 @@ class Sjadam {
     addHistory(data, castling) {
         let notation = castling ? (data.isKingside ? "0-0-0" : "0-0") : data;
         if (this.turn == this.startingColor) {
-            this.history.push({you: notation, opponent: ""});
+            this.history.push({player: notation, opponent: ""});
             let item = document.createElement("div");
             item.className = "item";
             let turnNo = document.createElement("div");
             turnNo.className = "turn-no";
             turnNo.innerHTML = this.history.length + ".";
-            let yourTurn = document.createElement("div");
-            yourTurn.className = "turn";
-            yourTurn.innerHTML = notation;
+            let playerTurn = document.createElement("div");
+            playerTurn.className = "turn";
+            playerTurn.innerHTML = notation;
             let opponentTurn = document.createElement("div");
             opponentTurn.className = "turn";
             item.appendChild(turnNo);
-            item.appendChild(yourTurn);
+            item.appendChild(playerTurn);
             item.appendChild(opponentTurn);
             this.listDiv.appendChild(item);
         } else {
@@ -187,8 +215,8 @@ class Sjadam {
     }
 
     removeSelected() {
-        if (document.querySelector(".selected") != null) {
-            document.querySelector(".selected").classList.remove("selected");
+        if (document.querySelector(".piece.selected") != null) {
+            document.querySelector(".piece.selected").classList.remove("selected");
         }
     }
 
@@ -506,7 +534,7 @@ class Sjadam {
                 this.chessboard[y].push({piece: newPiece.piece, hasMoved: newPiece.hasMoved, elem: this.addPiece(newPiece.piece, x * this.blockSize, y * this.blockSize)});
             }
         }
-        cb();
+        if (cb != undefined) cb();
     }
 
     checkPos(a) {
@@ -518,13 +546,17 @@ class Sjadam {
     }
 
     reset() {
-        this.initChessBoard(() => {
-            this.clearPiece();
-            this.turn = this.startingColor;
-            this.updateTurn();
-            this.isPlaying = true;
-            this.clearListDivs();
-        });
+        if (this.isListHistory) {
+            this.initChessBoard(() => {
+                this.clearPiece();
+                this.turn = this.startingColor;
+                this.updateTurn();
+                this.isPlaying = true;
+                this.clearListDivs();
+            });
+        } else {
+            this.loadCurrentSjadammatt();
+        }
     }
 
     clearGame() {
@@ -544,10 +576,10 @@ class Sjadam {
 
     updateTurn() {
         if (this.turn == this.startingColor) {
-            divYou.classList.add("turn");
+            divPlayer.classList.add("turn");
             divOpponent.classList.remove("turn");
         } else {
-            divYou.classList.remove("turn");
+            divPlayer.classList.remove("turn");
             divOpponent.classList.add("turn");
         }
     }

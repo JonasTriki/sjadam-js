@@ -1,10 +1,10 @@
 window.addEventListener("load", init);
-let divYou, divOpponent, divGameList;
+let divPlayer, divOpponent, divGameList;
 
 function init() {
 
     // Load DOM-elements, top game-info.
-    divYou = document.querySelector("#you");
+    divPlayer = document.querySelector("#player");
     divOpponent = document.querySelector("#opponent");
 
     // Game history/sjadammatt list

@@ -26,17 +26,17 @@ function initMenu(sjadammatts) {
         // Load last sjadammatt
         let last = sjadam.sjadammatts[0];
         let isWhite = last.startingColor == "w";
-        divYou.innerHTML = isWhite ? "White" : "Black";
+        divPlayer.innerHTML = isWhite ? "White" : "Black";
         divOpponent.innerHTML = isWhite ? "Black" : "White";
         sjadam.setBlockSize(document.querySelector("#main-menu").offsetWidth);
         sjadam.setGameDiv(gameDiv);
         menuMain.classList.remove("active");
 
-        sjadam.loadGame(last, () => {
+        // Load game and view game.
+        sjadam.setIsListHistory(false);
+        sjadam.addSjadammattDays();
+        sjadam.loadCurrentSjadammatt(() => {
             gameContainer.classList.remove("hidden");
-            sjadam.setIsListHistory(false);
-            sjadam.addSjadammattDays();
-            sjadam.isPlaying = true;
         });
     });
     btnPlayVsFriend = document.querySelector("#play-vs-friend");
@@ -58,7 +58,7 @@ function initMenu(sjadammatts) {
         // Set starting color, block size and game div.
         let isWhite = btnWhite.classList.contains("checked");
         sjadam.setStartingColor(isWhite ? "w" : "b");
-        divYou.innerHTML = isWhite ? "White" : "Black";
+        divPlayer.innerHTML = isWhite ? "White" : "Black";
         divOpponent.innerHTML = isWhite ? "Black" : "White";
         sjadam.setBlockSize(document.querySelector("#start-game-menu").offsetWidth);
         sjadam.setGameDiv(gameDiv);

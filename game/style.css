@@ -238,7 +238,7 @@ html, body {
 }
 
 #list {
-    height: calc(100% - 147px); /* 70px + 2px + 70px + 5px */
+    height: calc(100% - 142px); /* 70px + 2px + 70px */
     overflow-y: auto;
 }
 
