@@ -24,6 +24,11 @@ html, body {
     text-align: center;
 }
 
+#header a {
+    color: #fafafa;
+    text-decoration: none;
+}
+
 #github {
     display: inline-block;
     float: right;
