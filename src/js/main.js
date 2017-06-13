@@ -62,7 +62,7 @@ function loadImage(pieceIndex, color, cb) {
 		pieceIndex++;
 		if (pieceIndex == 19) cb();
 		imgPieces[piece] = img;
-		loadImage(pieceIndex, pieceIndex <= 8 ? "w" : "b", cb)
+		loadImage(pieceIndex, pieceIndex <= 8 ? "w" : "b", cb);
 	};
 	img.src = "img/" + piece + ".png";
 }

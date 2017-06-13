@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Sjadam</title>
+        <link rel="stylesheet" href="style.css">
+        <link rel="icon" href="favicon.ico">
+        <script src="js/fen.js"></script>
+        <script src="js/sjadam.js"></script>
+        <script src="js/menu.js"></script>
+        <script src="js/main.js"></script>
+    </head>
+    <body>
+        <div id="header">
+            Sjadam
+            <a href="https://github.com/JonasTriki/sjadam-js" target="_blank"><div id="github"></div></a>
+        </div>
+        <div id="content">
+            <div id="sjadam">
+                <div id="main-menu" class="box shadow center active">
+                    <div class="menu-btn" id="new-game">Start a new game</div>
+                    <div class="menu-btn" id="daily-challenges">Daily challenges</div>
+                    <div class="menu-btn disabled" id="play-vs-friend">Play versus a friend<br>(not available yet)</div>
+                </div>
+                <div id="start-game-menu" class="box shadow center">
+                    <div class="menu-title">Please choose a starting color</div>
+                    <div id="piece-colors">
+                        <div class="menu-btn piece-color checked" id="white">White</div>
+                        <div class="menu-btn piece-color" id="black">Black</div>
+                    </div>
+                    <div class="menu-btn" id="start-game">Start game</div>
+                </div>
+                <div id="game-container" class="hidden">
+                    <div id="game" class="box shadow" oncontextmenu="return false;"></div>
+                    <div id="game-info" class="shadow">
+                        <div id="top">
+                            <div id="you" class="turn">White</div>
+                            <div id="versus">vs.</div>
+                            <div id="opponent">Black</div>
+                        </div>
+                        <div class="black-line"></div>
+                        <div id="list"></div>
+                        <div id="footer">
+                            <div id="quit-game">Quit game</div>
+                            <div id="reset-board">Reset</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

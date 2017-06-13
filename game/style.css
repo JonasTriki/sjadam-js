@@ -1,0 +1,300 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700');
+
+html, body {
+    font-family: 'Open Sans', sans-serif;
+    color: #fafafa;
+    height: 100%;
+    margin: 0;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background: -webkit-linear-gradient(top, #8c4c88 10%,#4c6f8c 60%,#4c878c 100%);
+    background: -moz-linear-gradient(top, #8c4c88 10%, #4c6f8c 60%, #4c878c 100%);
+    background: linear-gradient(to bottom, #8c4c88 10%,#4c6f8c 60%,#4c878c 100%);
+}
+
+#header {
+    width: 100%;
+    height: 75px;
+    line-height: 75px;
+    background: rgba(0, 0, 0, 0.33);
+    font-size: 36px;
+    text-align: center;
+}
+
+#github {
+    display: inline-block;
+    float: right;
+    width: 75px;
+    height: 75px;
+    background: url(img/github.png) no-repeat center;
+}
+
+#content {
+    width: 100%;
+    height: calc(100% - 75px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.shadow {
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.box {
+    width: 560px;
+    height: 560px;
+    margin: auto;
+}
+
+#sjadam {
+    display: inline-flex;
+    height: 560px;
+    width: 100%;
+}
+
+.center {
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.center.active {
+    display: flex;
+}
+
+.hidden {
+    display: none;
+}
+
+.menu-btn {
+    color: #454545;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid rgba(130, 130, 130, 0.7);
+    background: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    font-size: 24px;
+    text-align: center;
+    padding: 40px;
+    margin: 10px 80px;
+}
+
+.menu-btn.piece-color {
+    width: 100%;
+    margin: 10px 0px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-position-x: 30px;
+    text-align: right;
+}
+
+.menu-btn.piece-color.checked {
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.menu-btn.piece-color#white {
+    background-image: url(img/kw.png);
+    margin-right: 10px;
+}
+
+.menu-btn.piece-color#black {
+    background-image: url(img/kb.png);
+    margin-left: 10px;
+}
+
+.menu-btn.disabled {
+    color: rgba(152, 152, 152, 1.0);
+    cursor: default;
+}
+
+.menu-title {
+    color: #454545;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0 80px 40px;
+}
+
+#piece-colors {
+    display: flex;
+    flex-direction: row;
+    margin: 0 80px;
+}
+
+#game-container {
+    display: inline-flex;
+    height: 560px;
+    margin: auto;
+}
+
+#game-container.hidden {
+    display: none;
+}
+
+#game {
+    display: inline-block;
+    float: left;
+    position: relative;
+    background-size: 25%;
+    background-image: url(img/board-bg.png);
+    image-rendering: pixelated;
+}
+
+#game-info {
+    display: inline-block;
+    margin-left: 20px;
+    width: 300px;
+    height: 100%;
+ }
+
+.square {
+    position: absolute;
+    width: 12.5%;
+    height: 12.5%;
+}
+
+.piece {
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 2;
+    transition: top 1s ease, left 1s ease;
+}
+
+.piece.selected {
+    background-color: #dc0000;
+}
+
+.piece:not(.selected):hover {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+#overlays {
+    width: 100%;
+    height: 100%;
+}
+
+.overlay {
+    z-index: 1;
+}
+
+.overlay.sjadam-move {
+    background-color: rgba(0, 104, 220, 0.5);
+}
+
+.overlay.chess-move {
+    background-color: rgba(161, 0, 220, 0.5);
+}
+
+.overlay.castling-move {
+    background-color: rgba(220, 106, 0, 0.5);
+}
+
+/* White pieces */
+.piece.rw { background-image: url(img/rw.png); }
+.piece.nw { background-image: url(img/nw.png); }
+.piece.bw { background-image: url(img/bw.png); }
+.piece.qw { background-image: url(img/qw.png); }
+.piece.kw { background-image: url(img/kw.png); }
+.piece.pw { background-image: url(img/pw.png); }
+
+/* Black pieces */
+.piece.rb { background-image: url(img/rb.png); }
+.piece.nb { background-image: url(img/nb.png); }
+.piece.bb { background-image: url(img/bb.png); }
+.piece.qb { background-image: url(img/qb.png); }
+.piece.kb { background-image: url(img/kb.png); }
+.piece.pb { background-image: url(img/pb.png); }
+
+#top {
+    height: 70px;
+    display: flex;
+}
+
+#top > div:not(#versus) {
+    width: 100%;
+}
+
+#top > div {
+    color: #454545;
+    font-size: 24px;
+    line-height: 70px;
+    text-align: center;
+}
+
+#top > div.turn {
+    font-weight: bold;
+}
+
+.black-line {
+    width: 100%;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+#list {
+    height: calc(100% - 147px); /* 70px + 2px + 70px + 5px */
+    overflow-y: auto;
+}
+
+.item {
+    height: 35px;
+    display: flex;
+}
+
+.item > div:not(.turn-no) {
+    width: 100%;
+}
+
+.item .turn-no {
+    padding-left: 10px;
+}
+
+.item > div, .item.day {
+    color: #454545;
+    font-size: 20px;
+    line-height: 35px;
+    text-align: center;
+}
+
+.item.day {
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.item.day:not(.selected):hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.item.day.selected {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+#footer {
+    display: flex;
+    flex-direction: row;
+    height: 12.5%;
+}
+
+#footer > div {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: background 0.3s ease;
+    color: #454545;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 70px;
+    text-align: center;
+    cursor: pointer;
+}
+
+#footer > div:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
