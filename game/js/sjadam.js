@@ -4,6 +4,7 @@ class Sjadam {
         this.isPlaying = true;
         this.defaultLocations = ["r", "n", "b", "q", "k", "b", "n", "r"];
         this.pawn = "p";
+        this.pawnTwoSteps = false;
         this.hoverPos = {x: -1, y: -1};
         this.clearPiece();
     }
@@ -58,14 +59,15 @@ class Sjadam {
         }
     }
 
-    toAN(originPos, destPos) {
+    toAN(originPos, destPos, enPassant) {
         let originPiece = this.chessboard[originPos.y][originPos.x].piece.charAt(0);
         let destPiece = this.chessboard[destPos.y][destPos.x].piece.charAt(0);
-        let taking = destPiece != "" ? "x" : "";
-        let letter = (originPiece != "p" || taking != "") ? originPiece.toUpperCase() : "";
+        let taking = (destPiece != "" || enPassant) ? "x" : "";
+        let letter = enPassant ? "P" : ((originPiece != "p" || taking != "") ? originPiece.toUpperCase() : "");
         let x = String.fromCharCode(97 + destPos.x);
         let y = 8 - destPos.y;
-        return letter + taking + x + y;
+        let epSuffix = enPassant ? "e.p." : "";
+        return letter + taking + x + y + epSuffix;
     }
 
     addHistory(data, castling) {
@@ -115,7 +117,7 @@ class Sjadam {
         let canDoSjadamMove = this.sjadamMoves.filter((a) => this.checkPos(a)).length;
         let canChangePiece = (this.sjadamPiece.x == -1 && this.sjadamPiece.y == -1) || !this.hasSjadamPieceMoved();
         if (canDoChessMove || canDoSjadamMove)  {
-            let an = this.toAN(this.selectedPos, this.hoverPos);
+            let an = this.toAN(this.selectedPos, this.hoverPos, false);
             this.movePiece(this.selectedPos.x, this.selectedPos.y, this.hoverPos.x, this.hoverPos.y);
             if (!this.isPlaying) {
                 if (this.isListHistory) {
@@ -134,7 +136,17 @@ class Sjadam {
 
                         // Move rook
                         this.movePiece(cast.rookX, cast.rookY, cast.dX, cast.rookY);
+                    } else if (chessMove.enPassant) {
+
+                        // We're performing an en passant, remove the piece as we take it!
+                        this.removePiece(chessMove.enPassant.x, chessMove.enPassant.y);
+
+                        // Make sure we add the en passant suffix on the notation!
+                        an = this.toAN(this.selectedPos, this.hoverPos, true);
                     }
+                    this.pawnTwoSteps = chessMove.pawnTwoSteps ? {x: chessMove.x, y: chessMove.y} : false;
+                } else {
+                    this.pawnTwoSteps = false;
                 }
                 this.checkQueen(this.hoverPos.x, this.hoverPos.y);
 
@@ -260,6 +272,15 @@ class Sjadam {
         this.chessboard[moveY][moveX].elem.classList.add(newPiece);
     }
 
+    removePiece(x, y) {
+        if (!this.isValidPos(x, y)) return;
+
+        // Remove piece
+        this.chessboard[y][x].piece = "";
+        this.chessboard[y][x].hasMoved = false;
+        this.chessboard[y][x].elem.className = "square piece";
+    }
+
     movePiece(x, y, dX, dY) {
         if (!this.isValidPos(x, y) || !this.isValidPos(dX, dY)) return;
 
@@ -296,7 +317,7 @@ class Sjadam {
             let hitPiece = false;
             let nextPos = {x: x + dir.x, y: y + dir.y};
             while (!hitPiece && this.isValidPos(nextPos.x, nextPos.y) && this.canAttackPiece(nextPos.x, nextPos.y)) {
-                let castling;
+                let move = {x: nextPos.x, y: nextPos.y};
                 if (dir.condition != null) {
                     if (dir.condition.initPos) {
                         if (piece.piece.charAt(0) == "p") {
@@ -331,9 +352,21 @@ class Sjadam {
 
                         // Set castling info for move.
                         let dX = x + incr;
-                        castling = {rookX: rookX, rookY: rookY, dX: dX, isKingside: dX - rookX == 2};
+                        move.castling = {rookX: rookX, rookY: rookY, dX: dX, isKingside: dX - rookX == 2};
                     }
-                    if (dir.condition.pieceExists != null) {
+                    if (dir.condition.enPassant && this.pawnTwoSteps) {
+
+                        // Check if we are at the same row and to the left/right of the pawn we're taking.
+                        let sameRow = y == this.pawnTwoSteps.y;
+                        let correctX = x == this.pawnTwoSteps.x - dir.x;
+
+                        if (sameRow && correctX) {
+
+                            // Add en passant move
+                            move.enPassant = {x: this.pawnTwoSteps.x, y: this.pawnTwoSteps.y};
+                        }
+                    }
+                    if (dir.condition.pieceExists != null && !move.enPassant) {
                         let nextPiece = this.chessboard[nextPos.y][nextPos.x].piece;
                         if (dir.condition.pieceExists) {
                             if (nextPiece == "") break;
@@ -345,17 +378,15 @@ class Sjadam {
                                     prevPieceCond = onePieceBack == "";
                                 } else {
                                     prevPieceCond = onePieceBack != "";
+                                    if (!prevPieceCond && nextPiece == "") move.pawnTwoSteps = true;
                                 }
                             }
                             if (nextPiece != "" || prevPieceCond) return moves;
                         }
                     }
                 }
-                if (!castling) {
-                    moves.push({x: nextPos.x, y: nextPos.y});
-                } else {
-                    moves.push({x: nextPos.x, y: nextPos.y, castling: castling});
-                }
+                moves.push(move);
+
                 hitPiece = this.chessboard[nextPos.y][nextPos.x].piece != "";
                 nextPos.x += dir.x;
                 nextPos.y += dir.y;
@@ -392,10 +423,14 @@ class Sjadam {
                                      {x: -2, y: 0, condition: {hasMoved: false, castling: true, rookX: 0}}], true);
     }
 
+    pawnYMove() {
+        return this.turn == this.startingColor ? -1 : 1;
+    }
+
     pawnMoves(x, y) {
-        let move = this.turn == this.startingColor ? -1 : 1;
-        return this.findMoves(x, y, [{x: -1, y: move, condition: {pieceExists: true}},
-                                     {x: 1, y: move, condition: {pieceExists: true}},
+        let move = this.pawnYMove();
+        return this.findMoves(x, y, [{x: -1, y: move, condition: {pieceExists: true, enPassant: true}},
+                                     {x: 1, y: move, condition: {pieceExists: true, enPassant: true}},
                                      {x: 0, y: move, condition: {pieceExists: false}},
                                      {x: 0, y: 2 * move, condition: {pieceExists: false, prevPieceExists: false, hasMoved: false, initPos: true}}], true);
     }
@@ -546,6 +581,7 @@ class Sjadam {
     }
 
     reset() {
+        this.pawnTwoSteps = false;
         if (this.isListHistory) {
             this.initChessBoard(() => {
                 this.clearPiece();
