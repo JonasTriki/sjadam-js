@@ -5,6 +5,8 @@
         <title>Sjadam</title>
         <link rel="stylesheet" href="style.css">
         <link rel="icon" href="favicon.ico">
+        <script src="js/socket.io.js"></script>
+        <script src="js/pre.js"></script>
         <script src="js/fen.js"></script>
         <script src="js/sjadam.js"></script>
         <script src="js/menu.js"></script>
@@ -20,7 +22,6 @@
                 <div id="main-menu" class="box shadow center active">
                     <div class="menu-btn" id="new-game">Start a new game</div>
                     <div class="menu-btn" id="daily-challenges">Daily challenges</div>
-                    <div class="menu-btn disabled" id="play-vs-friend">Play versus a friend<br>(not available yet)</div>
                 </div>
                 <div id="start-game-menu" class="box shadow center">
                     <div class="menu-title">Please choose a starting color</div>
@@ -28,7 +29,8 @@
                         <div class="menu-btn piece-color checked" id="white">White</div>
                         <div class="menu-btn piece-color" id="black">Black</div>
                     </div>
-                    <div class="menu-btn" id="start-game">Start game</div>
+                    <div class="menu-btn" id="start-game">Start game (offline)</div>
+                    <div class="menu-btn" id="play-vs-friend">Play versus a friend</div>
                 </div>
                 <div id="game-container" class="hidden">
                     <div id="game" class="box shadow" oncontextmenu="return false;"></div>
@@ -45,6 +47,22 @@
                             <div id="reset-board">Reset</div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal">
+            <div class="modal-box" id="copy-game-url">
+                <div class="header">
+                    <div class="title">Waiting for opponent...</div>
+                    <!-- <div class="close">&times;</div> -->
+                </div>
+                <div class="content">
+                    <div class="desc">Hand your friend the following URL:</div>
+                    <input type="text" id="game-url" value="https://sjadam.no/#52312" readonly \>
+                </div>
+                <div class="footer">
+                    <div class="btn color" id="copy-url">Copy to Clipboard</div>
+                    <div class="btn" id="cancel-game">Cancel</div>
                 </div>
             </div>
         </div>

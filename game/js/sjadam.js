@@ -495,6 +495,10 @@ class Sjadam {
         this.turn = color;
     }
 
+    setIsOnlineGame(isOnline) {
+        this.isOnline = isOnline;
+    }
+
     setListDiv(listDiv) {
         this.listDiv = listDiv;
     }
@@ -581,6 +585,7 @@ class Sjadam {
     }
 
     reset() {
+        // TODO: fix/remove reset for when this.isOnline == true.
         this.pawnTwoSteps = false;
         if (this.isListHistory) {
             this.initChessBoard(() => {

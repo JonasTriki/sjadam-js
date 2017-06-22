@@ -1,0 +1,19 @@
+{
+  "name": "sjadam",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.3",
+    "express-validator": "^3.2.0",
+    "mongodb": "^2.2.29",
+    "morgan": "^1.8.2",
+    "serve-favicon": "^2.4.3",
+    "socket.io": "^2.0.3"
+  }
+}
