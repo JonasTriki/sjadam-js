@@ -30,4 +30,7 @@ function init() {
     document.querySelector("#reset-board").addEventListener("click", () => {
         sjadam.reset();
     });
+
+    // Generate player id if it doesn't exist
+    if (!localStorage.playerId) localStorage.playerId = generatePlayerId();
 }
