@@ -1,6 +1,6 @@
 # ♔ Sjadam ♚
 Sjadam (Chess + Checkers) made using JS!
-To try the game out yourself, check out [sjadam.no](https://sjadam.no/rules.html)!
+To try the game out yourself, check out [sjadam.no](https://sjadam.no/)!
 ***
 ![Sjadam game](https://sjadam.no/sjadam-github.png)
 
@@ -10,11 +10,11 @@ To try the game out yourself, check out [sjadam.no](https://sjadam.no/rules.html
 
 # Game rules
 - You may start of your move with either a sjadam jump or a legal chess move.
-- Once you do a chess move (or __rightclick__ to on a tile), your turn ends.
+- Once you do a chess move (or __rightclick__ on a tile), your turn ends.
 - The sjadam jump is valid if you can jump over a piece onto an empty field. It can be any direction; north/south, west/east or sideways.
 - You may jump over as many of your own pieces as you like, but only over one opponent piece each turn.
 - You may do a chess move whenever you feel like it.
-- If any piece except the king makes it all the way to the opponents side, it evolves to a queen.
+- If any piece except the king makes it all the way to the opponents side, it evolves into a queen.
 
 # License
 - The chess pieces are taken from [Wikimedia](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces) and licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
