@@ -24,6 +24,30 @@ let sjadam = new Sjadam();
 // Socket.IO game socket.
 let socket;
 
+function connectSocket(gameId, readyState) {
+    socket = io.connect();
+    socket.on("connect", (data) => {
+        sjadam.setSocket(socket);
+        socket.emit("join", gameId);
+    });
+    socket.on("message", (data) => {
+        switch (data.type) {
+            case "state":
+                if (data.msg == "ready") {
+                    readyState();
+                }
+                break;
+            case "move":
+            case "remove":
+            case "turn":
+                sjadam.socketData(data);
+                break;
+            default:
+                break;
+        }
+    });
+}
+
 function initMenu(sjadammatts) {
     sjadam.setSjadammatts(sjadammatts); // Load sjadammatts for future references.
 
@@ -128,28 +152,15 @@ function initMenu(sjadammatts) {
                     });
 
                     // Connect to socket and send gameId
-                    socket = io.connect();
-                    socket.on("connect", (data) => {
-                        sjadam.setSocket(socket);
-                        socket.emit("join", res.data.gameId);
-                    });
-                    socket.on("message", (data) => {
-                        switch (data.type) {
-                            case "state":
-                                if (data.msg == "ready") {
-                                    hideModal(false);
-                                    sjadam.isPlaying = true;
-                                }
-                                break;
-                            default:
-                                break;
-                        }
+                    connectSocket(res.data.gameId, () => {
+
+                        // Ready state
+                        hideModal(false);
+                        sjadam.isPlaying = true;
                     });
 
                     // Show modal (copy game url popup)
                     showModal(res.data.url);
-
-                    // TODO: Connect to socket and wait for opponent to join game.
                 }
             }
         };
@@ -203,22 +214,10 @@ function checkUrlParamter() {
                         if (res.status == "ok") {
 
                             // We're in! Connect to socket, start playing.
-                            socket = io.connect();
-                            socket.on("connect", (data) => {
-                                sjadam.setSocket(socket);
-                                socket.emit("join", gameId);
-                            });
-                            socket.on("message", (data) => {
-                                switch (data.type) {
-                                    case "state":
-                                        if (data.msg == "ready") {
-                                            startOnlineGame(res.data);
-                                            // TODO: start game
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
+                            connectSocket(gameId, () => {
+
+                                // Ready state
+                                startOnlineGame(res.data.color);
                             });
                         }
                     }

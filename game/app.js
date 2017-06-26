@@ -45,31 +45,52 @@ io.on("connection", (socket) => {
     });
 
     socket.on("data", (data) => {
-        
+
+        // Figure out what we need to send back to other socket.
+        let msg = {type: data.type};
+        if (msg.type == "move" || msg.type == "remove") {
+
+            // We need to flip the coordinates, since we flip the board for the opponent.
+            // x and y are both in data.type == "remove" and "move"
+            msg.x = 7 - data.x;
+            msg.y = 7 - data.y;
+            if (msg.type == "move") {
+                msg.dX = 7 - data.dX;
+                msg.dY = 7 - data.dY;
+            }
+        }
+
+        // Find other game-socket and emit msg
+        for (let i = 0; i < sockets.length; i++) {
+            if (sockets[i].socket.id != socket.id) {
+                io.to(sockets[i].socket.id).emit("message", msg);
+                break;
+            }
+        }
     });
 
     socket.on("disconnect", () => {
         console.log("Client disconnected.", socket.id);
 
         // Find socket from array
-        let i = 0;
-        for (;i < sockets.length; i++) {
-            if (sockets[i].socket.id === socket.id) break;
-            i++;
-        }
+        for (let i = 0; i < sockets.length; i++) {
+            if (sockets[i].socket.id == socket.id)  {
 
-        // Reduce game participant count
-        let gameId = sockets[i].gameId;
-        games[gameId]--;
-        console.log("Disconnected", gameId, games[gameId]);
-        if (games[gameId] == 1) {
-            // TODO: Send message to other socket
-        } else if (games[gameId] == 0) {
-            delete games[gameId];
-        }
+                // Reduce game participant count
+                let gameId = sockets[i].gameId;
+                games[gameId]--;
+                console.log("Disconnected", gameId, games[gameId]);
+                if (games[gameId] == 1) {
+                    // TODO: Send message to other socket
+                } else if (games[gameId] == 0) {
+                    delete games[gameId];
+                }
 
-        // Remove from sockets
-        sockets.splice(i, 1);
+                // Remove from sockets
+                sockets.splice(i, 1);
+                break;
+            }
+        }
     });
 });
 

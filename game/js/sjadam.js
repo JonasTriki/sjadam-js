@@ -70,30 +70,43 @@ class Sjadam {
         return letter + taking + x + y + epSuffix;
     }
 
+    appendHistoryDiv(player, opponent) {
+        this.history.push({player: player, opponent: opponent});
+        let item = document.createElement("div");
+        item.className = "item";
+        let turnNo = document.createElement("div");
+        turnNo.className = "turn-no";
+        turnNo.innerHTML = this.history.length + ".";
+        let playerTurn = document.createElement("div");
+        playerTurn.className = "turn";
+        playerTurn.innerHTML = player;
+        let opponentTurn = document.createElement("div");
+        opponentTurn.className = "turn";
+        opponentTurn.innerHTML = opponent;
+        item.appendChild(turnNo);
+        item.appendChild(playerTurn);
+        item.appendChild(opponentTurn);
+        this.listDiv.appendChild(item);
+    }
+
     addHistory(data, castling) {
         let notation = castling ? (data.isKingside ? "0-0-0" : "0-0") : data;
-        if (this.turn == this.playerColor) {
-            this.history.push({player: notation, opponent: ""});
-            let item = document.createElement("div");
-            item.className = "item";
-            let turnNo = document.createElement("div");
-            turnNo.className = "turn-no";
-            turnNo.innerHTML = this.history.length + ".";
-            let playerTurn = document.createElement("div");
-            playerTurn.className = "turn";
-            playerTurn.innerHTML = notation;
-            let opponentTurn = document.createElement("div");
-            opponentTurn.className = "turn";
-            item.appendChild(turnNo);
-            item.appendChild(playerTurn);
-            item.appendChild(opponentTurn);
-            this.listDiv.appendChild(item);
+        if (this.turn == "w") {
+            this.appendHistoryDiv(notation, "");
         } else {
             let i = this.history.length - 1;
             this.history[i].opponent = notation;
 
             // Get children at pos i and its children at pos 2 (aka opponent turn).
             this.listDiv.children[i].children[2].innerHTML = notation;
+        }
+        if (this.colorWon) {
+            let whiteWon = this.colorWon == "w" ? 1 : 0;
+            let blackWon = 1 - whiteWon;
+            let i = this.history.length - 1;
+            this.listDiv.children[i].children[1].innerHTML = whiteWon;
+            this.listDiv.children[i].children[2].innerHTML = blackWon;
+            //this.colorWon = undefined;
         }
     }
 
@@ -107,6 +120,9 @@ class Sjadam {
             this.clearPiece();
             return;
         }
+
+        // Check if we're online and our turn
+        if (this.isOnline && this.turn != this.playerColor) return;
 
         // Check if we can select the piece (right color).
         let piece = this.chessboard[this.hoverPos.y][this.hoverPos.x].piece;
@@ -136,10 +152,12 @@ class Sjadam {
 
                         // Move rook
                         this.movePiece(cast.rookX, cast.rookY, cast.dX, cast.rookY);
+                        this.emitData({type: "move", x: cast.rookX, y: cast.rookY, dX: cast.dX, dY: cast.rookY});
                     } else if (chessMove.enPassant) {
 
                         // We're performing an en passant, remove the piece as we take it!
                         this.removePiece(chessMove.enPassant.x, chessMove.enPassant.y);
+                        this.emitData({type: "remove", x: chessMove.enPassant.x, y: chessMove.enPassant.y});
 
                         // Make sure we add the en passant suffix on the notation!
                         an = this.toAN(this.selectedPos, this.hoverPos, true);
@@ -159,7 +177,10 @@ class Sjadam {
                     }
                 }
 
+                // Emit data to socket if needed.
+                this.emitData({type: "move", x: this.sjadamPiece.x, y: this.sjadamPiece.y, dX: this.hoverPos.x, dY: this.hoverPos.y});
                 this.switchTurn();
+                this.emitData({type: "turn"});
                 return;
             }
 
@@ -250,9 +271,8 @@ class Sjadam {
         let destPiece = this.chessboard[moveY][moveX].piece;
         if (destPiece.length == 2 && destPiece.charAt(0) == "k") {
             this.isPlaying = false;
-            this.colorWon = destPiece.slice(-1) == "w" ? "Black" : "White";
-            console.log(this.colorWon + " won the game!");
-            this.switchTurn();
+            this.colorWon = destPiece.slice(-1) == "w" ? "b" : "w";
+            this.clearPiece();
         }
     }
 
@@ -272,18 +292,25 @@ class Sjadam {
         this.chessboard[moveY][moveX].elem.classList.add(newPiece);
     }
 
-    emitData(color, data)
+    emitData(data) {
         if (!this.isOnline || this.socket == undefined) return;
 
         // Send data to socket
-        this.socket.emit("data", {color: color, data: data});
-    )
+        this.socket.emit("data", data);
+    }
+
+    socketData(data) {
+        if (data.type == "move") {
+            this.movePiece(data.x, data.y, data.dX, data.dY);
+        } else if (data.type == "remove") {
+            this.removePiece(data.x, data.y);
+        } else if (data.type == "turn") {
+            this.switchTurn();
+        }
+    }
 
     removePiece(x, y) {
         if (!this.isValidPos(x, y)) return;
-
-        // Send data to socket if we're playing online
-        emitData(this.playerColor, {"type": "remove", x: x, y: y});
 
         // Remove piece
         this.chessboard[y][x].piece = "";
@@ -293,9 +320,6 @@ class Sjadam {
 
     movePiece(x, y, dX, dY) {
         if (!this.isValidPos(x, y) || !this.isValidPos(dX, dY)) return;
-
-        // Send data to socket if we're playing online
-        emitData(this.playerColor, {"type": "move", x: x, y: y, dX: dX, dY: dY});
 
         // Check if we are taking the king => winning.
         this.checkKing(dX, dY);
