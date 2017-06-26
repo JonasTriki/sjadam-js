@@ -29,7 +29,7 @@ class Sjadam {
     loadCurrentSjadammatt(cb) {
         let matt = this.sjadammatts[this.getSelectedDay()];
         this.loadGame(matt, () => {
-            let isWhite = matt.startingColor == "w";
+            let isWhite = matt.playerColor == "w";
             divPlayer.innerHTML = isWhite ? "White" : "Black";
             divOpponent.innerHTML = isWhite ? "Black" : "White";
             this.isPlaying = true;
@@ -72,7 +72,7 @@ class Sjadam {
 
     addHistory(data, castling) {
         let notation = castling ? (data.isKingside ? "0-0-0" : "0-0") : data;
-        if (this.turn == this.startingColor) {
+        if (this.turn == this.playerColor) {
             this.history.push({player: notation, opponent: ""});
             let item = document.createElement("div");
             item.className = "item";
@@ -262,7 +262,7 @@ class Sjadam {
 
         // Find color and check if we should convert to queen
         let color = piece.slice(-1);
-        let convertToQueen = (this.turn == this.startingColor && moveY == 0) || (this.turn != this.startingColor && moveY == 7);
+        let convertToQueen = (this.turn == this.playerColor && moveY == 0) || (this.turn != this.playerColor && moveY == 7);
         if (!convertToQueen) return;
 
         // Convert piece to queen
@@ -272,8 +272,18 @@ class Sjadam {
         this.chessboard[moveY][moveX].elem.classList.add(newPiece);
     }
 
+    emitData(color, data)
+        if (!this.isOnline || this.socket == undefined) return;
+
+        // Send data to socket
+        this.socket.emit("data", {color: color, data: data});
+    )
+
     removePiece(x, y) {
         if (!this.isValidPos(x, y)) return;
+
+        // Send data to socket if we're playing online
+        emitData(this.playerColor, {"type": "remove", x: x, y: y});
 
         // Remove piece
         this.chessboard[y][x].piece = "";
@@ -283,6 +293,9 @@ class Sjadam {
 
     movePiece(x, y, dX, dY) {
         if (!this.isValidPos(x, y) || !this.isValidPos(dX, dY)) return;
+
+        // Send data to socket if we're playing online
+        emitData(this.playerColor, {"type": "move", x: x, y: y, dX: dX, dY: dY});
 
         // Check if we are taking the king => winning.
         this.checkKing(dX, dY);
@@ -322,8 +335,8 @@ class Sjadam {
                     if (dir.condition.initPos) {
                         if (piece.piece.charAt(0) == "p") {
                             let color = piece.piece.charAt(1);
-                            if (color == this.startingColor && y != 6) break;
-                            if (color != this.startingColor && y != 1) break;
+                            if (color == this.playerColor && y != 6) break;
+                            if (color != this.playerColor && y != 1) break;
                         }
                     }
                     if (dir.condition.hasMoved != null) {
@@ -332,8 +345,8 @@ class Sjadam {
                     if (dir.condition.castling) {
 
                         // Check if king has moved
-                        let rookY = this.turn == this.startingColor ? 7 : 0;
-                        if (x != (this.startingColor == "w" ? 4 : 3) || y != rookY) break;
+                        let rookY = this.turn == this.playerColor ? 7 : 0;
+                        if (x != (this.playerColor == "w" ? 4 : 3) || y != rookY) break;
 
                         // Check if rook exists/has moved
                         let rookX = dir.condition.rookX;
@@ -373,7 +386,7 @@ class Sjadam {
                         } else {
                             let prevPieceCond = false;
                             if (dir.condition.prevPieceExists != null) {
-                                let onePieceBack = this.chessboard[nextPos.y + (this.turn == this.startingColor ? 1 : -1)][nextPos.x].piece;
+                                let onePieceBack = this.chessboard[nextPos.y + (this.turn == this.playerColor ? 1 : -1)][nextPos.x].piece;
                                 if (dir.condition.prevPieceExists) {
                                     prevPieceCond = onePieceBack == "";
                                 } else {
@@ -424,7 +437,7 @@ class Sjadam {
     }
 
     pawnYMove() {
-        return this.turn == this.startingColor ? -1 : 1;
+        return this.turn == this.playerColor ? -1 : 1;
     }
 
     pawnMoves(x, y) {
@@ -490,13 +503,17 @@ class Sjadam {
         this.gameDiv.addEventListener("mouseleave", (e) => this.mouseLeave());
     }
 
-    setStartingColor(color) {
-        this.startingColor = color;
-        this.turn = color;
+    setPlayerColor(color) {
+        this.playerColor = color;
+        this.turn = "w";
     }
 
     setIsOnlineGame(isOnline) {
         this.isOnline = isOnline;
+    }
+
+    setSocket(socket) {
+        this.socket = socket;
     }
 
     setListDiv(listDiv) {
@@ -538,7 +555,7 @@ class Sjadam {
             if (this.chessboard[y] === undefined) this.chessboard[y] = [];
             for (let x = 0; x < 8; x++) {
                 let piece;
-                let isWhitePlaying = this.startingColor == "w";
+                let isWhitePlaying = this.playerColor == "w";
                 switch (y) {
                     case 0:
                         piece = this.defaultLocations[isWhitePlaying ? x : 7 - x] + (isWhitePlaying ? "b" : "w");
@@ -565,7 +582,7 @@ class Sjadam {
     loadGame(game, cb) {
         this.clearBoardDivs();
         this.chessboard = [];
-        this.setStartingColor(game.startingColor);
+        this.setPlayerColor(game.playerColor);
         for (let y = 0; y < 8; y++) {
             if (this.chessboard[y] === undefined) this.chessboard[y] = [];
             for (let x = 0; x < 8; x++) {
@@ -590,7 +607,7 @@ class Sjadam {
         if (this.isListHistory) {
             this.initChessBoard(() => {
                 this.clearPiece();
-                this.turn = this.startingColor;
+                this.turn = this.playerColor;
                 this.updateTurn();
                 this.isPlaying = true;
                 this.clearListDivs();
@@ -616,7 +633,7 @@ class Sjadam {
     }
 
     updateTurn() {
-        if (this.turn == this.startingColor) {
+        if (this.turn == this.playerColor) {
             divPlayer.classList.add("turn");
             divOpponent.classList.remove("turn");
         } else {

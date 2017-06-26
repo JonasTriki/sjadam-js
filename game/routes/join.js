@@ -15,7 +15,7 @@ router.post("/:gameId", function(req, res, next) {
         res.send("Game not found.");
         return;
     }
-    let gameId = +req.params.gameId;
+    let gameId = req.params.gameId;
     let playerId = req.body.player_id;
 
     // Connect to MongoDB Server
