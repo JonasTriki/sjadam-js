@@ -30,8 +30,6 @@ class Sjadam {
         let matt = this.sjadammatts[this.getSelectedDay()];
         this.loadGame(matt, () => {
             let isWhite = matt.playerColor == "w";
-            divPlayer.innerHTML = isWhite ? "White" : "Black";
-            divOpponent.innerHTML = isWhite ? "Black" : "White";
             this.isPlaying = true;
             if (cb != undefined) cb();
         });
@@ -59,14 +57,17 @@ class Sjadam {
         }
     }
 
-    toAN(originPos, destPos, enPassant) {
-        let originPiece = this.chessboard[originPos.y][originPos.x].piece.charAt(0);
-        let destPiece = this.chessboard[destPos.y][destPos.x].piece.charAt(0);
-        let taking = (destPiece != "" || enPassant) ? "x" : "";
-        let letter = enPassant ? "P" : ((originPiece != "p" || taking != "") ? originPiece.toUpperCase() : "");
-        let x = String.fromCharCode(97 + destPos.x);
-        let y = 8 - destPos.y;
-        let epSuffix = enPassant ? "e.p." : "";
+    toAN(opts) {
+        if (opts.castling) {
+            return opts.castling.isKingside ? "0-0-0" : "0-0";
+        }
+        let originPiece = this.chessboard[opts.fromPos.y][opts.fromPos.x].piece.charAt(0);
+        let destPiece = this.chessboard[opts.toPos.y][opts.toPos.x].piece.charAt(0);
+        let taking = (destPiece != "" || opts.enPassant) ? "x" : "";
+        let letter = opts.enPassant ? "P" : ((originPiece != "p" || taking != "") ? originPiece.toUpperCase() : "");
+        let x = String.fromCharCode(97 + opts.toPos.x);
+        let y = 8 - opts.toPos.y;
+        let epSuffix = opts.enPassant ? "e.p." : "";
         return letter + taking + x + y + epSuffix;
     }
 
@@ -89,8 +90,8 @@ class Sjadam {
         this.listDiv.appendChild(item);
     }
 
-    addHistory(data, castling) {
-        let notation = castling ? (data.isKingside ? "0-0-0" : "0-0") : data;
+    addHistory(notation, emit) {
+        if (!this.isListHistory) return; // Check if we should add to history
         if (this.turn == "w") {
             this.appendHistoryDiv(notation, "");
         } else {
@@ -108,6 +109,7 @@ class Sjadam {
             this.listDiv.children[i].children[2].innerHTML = blackWon;
             //this.colorWon = undefined;
         }
+        if (emit) this.emitData({type: "history", notation: notation});
     }
 
     mouseUp(e) {
@@ -133,34 +135,30 @@ class Sjadam {
         let canDoSjadamMove = this.sjadamMoves.filter((a) => this.checkPos(a)).length;
         let canChangePiece = (this.sjadamPiece.x == -1 && this.sjadamPiece.y == -1) || !this.hasSjadamPieceMoved();
         if (canDoChessMove || canDoSjadamMove)  {
-            let an = this.toAN(this.selectedPos, this.hoverPos, false);
+            let anOpts = {fromPos: {x: this.selectedPos.x, y: this.selectedPos.y}, toPos: {x: this.hoverPos.x, y: this.hoverPos.y}};
+            let an = this.toAN(anOpts);
             this.movePiece(this.selectedPos.x, this.selectedPos.y, this.hoverPos.x, this.hoverPos.y);
             if (!this.isPlaying) {
-                if (this.isListHistory) {
-
-                    // Add last move to history.
-                    this.addHistory(an, false);
-                }
+                this.addHistory(an, true); // Add last move to history.
                 return;
             }
             if (e.button == 2 || canDoChessMove) {
-                let cast;
                 if (canDoChessMove) {
                     let chessMove = this.chessMoves.filter((a) => this.checkPos(a))[0];
                     if (chessMove.castling) {
-                        cast = chessMove.castling;
+                        anOpts.castling = chessMove.castling;
+                        an = this.toAN(anOpts);
 
                         // Move rook
                         this.movePiece(cast.rookX, cast.rookY, cast.dX, cast.rookY);
                         this.emitData({type: "move", x: cast.rookX, y: cast.rookY, dX: cast.dX, dY: cast.rookY});
                     } else if (chessMove.enPassant) {
+                        anOpts.enPassant = true; // Make sure we add the en passant suffix on the notation!
+                        an = this.toAN(anOpts);
 
                         // We're performing an en passant, remove the piece as we take it!
                         this.removePiece(chessMove.enPassant.x, chessMove.enPassant.y);
                         this.emitData({type: "remove", x: chessMove.enPassant.x, y: chessMove.enPassant.y});
-
-                        // Make sure we add the en passant suffix on the notation!
-                        an = this.toAN(this.selectedPos, this.hoverPos, true);
                     }
                     this.pawnTwoSteps = chessMove.pawnTwoSteps ? {x: chessMove.x, y: chessMove.y} : false;
                 } else {
@@ -169,13 +167,7 @@ class Sjadam {
                 this.checkQueen(this.hoverPos.x, this.hoverPos.y);
 
                 // Add to history if possible
-                if (this.isListHistory) {
-                    if (cast) {
-                        this.addHistory(cast, true);
-                    } else {
-                        this.addHistory(an, false);
-                    }
-                }
+                this.addHistory(an, true);
 
                 // Emit data to socket if needed.
                 this.emitData({type: "move", x: this.sjadamPiece.x, y: this.sjadamPiece.y, dX: this.hoverPos.x, dY: this.hoverPos.y});
@@ -306,6 +298,8 @@ class Sjadam {
             this.removePiece(data.x, data.y);
         } else if (data.type == "turn") {
             this.switchTurn();
+        } else if (data.type == "history") {
+            this.addHistory(data.notation, false);
         }
     }
 
@@ -657,12 +651,12 @@ class Sjadam {
     }
 
     updateTurn() {
-        if (this.turn == this.playerColor) {
-            divPlayer.classList.add("turn");
-            divOpponent.classList.remove("turn");
+        if (this.turn == "w") {
+            divWhite.classList.add("turn");
+            divBlack.classList.remove("turn");
         } else {
-            divPlayer.classList.remove("turn");
-            divOpponent.classList.add("turn");
+            divWhite.classList.remove("turn");
+            divBlack.classList.add("turn");
         }
     }
 

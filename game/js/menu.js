@@ -25,7 +25,7 @@ let sjadam = new Sjadam();
 let socket;
 
 function connectSocket(gameId, readyState) {
-    socket = io.connect();
+    socket = io.connect("https://api.sjadam.no");
     socket.on("connect", (data) => {
         sjadam.setSocket(socket);
         socket.emit("join", gameId);
@@ -37,12 +37,8 @@ function connectSocket(gameId, readyState) {
                     readyState();
                 }
                 break;
-            case "move":
-            case "remove":
-            case "turn":
-                sjadam.socketData(data);
-                break;
             default:
+                sjadam.socketData(data);
                 break;
         }
     });
@@ -68,8 +64,6 @@ function initMenu(sjadammatts) {
         // Load last sjadammatt
         let last = sjadam.sjadammatts[0];
         let isWhite = last.startingColor == "w";
-        divPlayer.innerHTML = isWhite ? "White" : "Black";
-        divOpponent.innerHTML = isWhite ? "Black" : "White";
         sjadam.setBlockSize(document.querySelector("#main-menu").offsetWidth);
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
@@ -103,8 +97,6 @@ function initMenu(sjadammatts) {
         // Set starting color, block size and game div.
         let isWhite = btnWhite.classList.contains("checked");
         sjadam.setPlayerColor(isWhite ? "w" : "b");
-        divPlayer.innerHTML = isWhite ? "White" : "Black";
-        divOpponent.innerHTML = isWhite ? "Black" : "White";
         sjadam.setBlockSize(document.querySelector("#start-game-menu").offsetWidth);
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
@@ -128,7 +120,8 @@ function initMenu(sjadammatts) {
         } else if (window.ActiveXObject) {
             req = new ActiveXObject("Microsoft.XMLHTTP");
         }
-        req.open("POST", "/game", true);
+        req.open("POST", "https://api.sjadam.no/game", true);
+        req.setRequestHeader("Access-Control-Allow-Credentials", "true");
         req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         req.onreadystatechange = function() {
             if (req.readyState === 4 && req.status == 200) {
@@ -137,8 +130,6 @@ function initMenu(sjadammatts) {
 
                     // Creating game for host
                     sjadam.setPlayerColor(color);
-                    divPlayer.innerHTML = color == "w" ? "White" : "Black";
-                    divOpponent.innerHTML = color == "w" ? "Black" : "White";
                     sjadam.setBlockSize(document.querySelector("#start-game-menu").offsetWidth);
                     sjadam.setGameDiv(gameDiv);
                     sjadam.setIsOnlineGame(true);
@@ -206,7 +197,8 @@ function checkUrlParamter() {
                 } else if (window.ActiveXObject) {
                     req = new ActiveXObject("Microsoft.XMLHTTP");
                 }
-                req.open("POST", "/" + gameId, true);
+                req.open("POST", "https://api.sjadam.no/" + gameId, true);
+                req.setRequestHeader("Access-Control-Allow-Credentials", "true");
                 req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 req.onreadystatechange = function() {
                     if (req.readyState === 4 && req.status == 200) {
@@ -248,8 +240,6 @@ function startOnlineGame(color) {
 
     // Creating game for opponent
     sjadam.setPlayerColor(color);
-    divPlayer.innerHTML = color == "w" ? "White" : "Black";
-    divOpponent.innerHTML = color == "w" ? "Black" : "White";
     sjadam.setBlockSize(menuMain.offsetWidth);
     sjadam.setGameDiv(gameDiv);
     sjadam.setIsOnlineGame(true);
