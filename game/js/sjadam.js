@@ -289,9 +289,11 @@ class Sjadam {
 
         // Send data to socket
         this.socket.emit("data", data);
+        console.log("Send data", data);
     }
 
     socketData(data) {
+        console.log("Recieved data", data);
         if (data.type == "move") {
             this.movePiece(data.x, data.y, data.dX, data.dY);
         } else if (data.type == "remove") {

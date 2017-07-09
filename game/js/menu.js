@@ -25,7 +25,7 @@ let sjadam = new Sjadam();
 let socket;
 
 function connectSocket(gameId, readyState) {
-    socket = io.connect("https://api.sjadam.no");
+    socket = io.connect(API_LINK);
     socket.on("connect", (data) => {
         sjadam.setSocket(socket);
         socket.emit("join", gameId);
@@ -120,7 +120,7 @@ function initMenu(sjadammatts) {
         } else if (window.ActiveXObject) {
             req = new ActiveXObject("Microsoft.XMLHTTP");
         }
-        req.open("POST", "https://api.sjadam.no/game", true);
+        req.open("POST", API_LINK + "/game", true);
         req.setRequestHeader("Access-Control-Allow-Credentials", "true");
         req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         req.onreadystatechange = function() {
@@ -197,7 +197,7 @@ function checkUrlParamter() {
                 } else if (window.ActiveXObject) {
                     req = new ActiveXObject("Microsoft.XMLHTTP");
                 }
-                req.open("POST", "https://api.sjadam.no/" + gameId, true);
+                req.open("POST", API_LINKf + "/" + gameId, true);
                 req.setRequestHeader("Access-Control-Allow-Credentials", "true");
                 req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 req.onreadystatechange = function() {
