@@ -16,5 +16,15 @@ To try the game out yourself, check out [sjadam.no](https://sjadam.no/)!
 - You may do a chess move whenever you feel like it.
 - If any piece except the king makes it all the way to the opponents side, it evolves into a queen.
 
+# Todo-list
+- Add game-over screen.
+- Online
+    - Respond to opponent disconnections.
+    - Add promotion communcation between clients.
+    - Remove reset button/Replace with "Give up" button.
+
+# Known bugs
+None so far!
+
 # License
 - The chess pieces are taken from [Wikimedia](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces) and licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
