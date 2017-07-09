@@ -197,7 +197,7 @@ function checkUrlParamter() {
                 } else if (window.ActiveXObject) {
                     req = new ActiveXObject("Microsoft.XMLHTTP");
                 }
-                req.open("POST", API_LINKf + "/" + gameId, true);
+                req.open("POST", API_LINK + "/" + gameId, true);
                 req.setRequestHeader("Access-Control-Allow-Credentials", "true");
                 req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 req.onreadystatechange = function() {
