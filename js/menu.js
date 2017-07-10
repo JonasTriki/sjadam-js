@@ -16,7 +16,8 @@ if (!localStorage.playerId) localStorage.playerId = generatePlayerId();
 let menuMain, menuStartGame, gameContainer, gameDiv, gameInfo;
 let btnNewGame, btnDailyChallenges, btnPlayVsFriend;
 let btnWhite, btnBlack, btnStartGame;
-let modal, copyUrlBox, txtGameUrl, btnCopyToClipboard, btnCancelGame;
+let modal, txtNewGameUrl;
+let gameOverTitle, gameOverSpan, txtGameUrl, btnRequestRematch;
 
 // Create sjadam instance
 let sjadam = new Sjadam();
@@ -67,6 +68,7 @@ function initMenu(sjadammatts) {
         sjadam.setBlockSize(document.querySelector("#main-menu").offsetWidth);
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
+        sjadam.setGameOverCallback(null);
         menuMain.classList.remove("active");
 
         // Load game and view game.
@@ -100,6 +102,7 @@ function initMenu(sjadammatts) {
         sjadam.setBlockSize(document.querySelector("#start-game-menu").offsetWidth);
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
+        sjadam.setGameOverCallback(null);
         menuStartGame.classList.remove("active");
 
         // Init board and we're ready to play.
@@ -129,45 +132,51 @@ function initMenu(sjadammatts) {
                 if (res.status == "ok") {
 
                     // Creating game for host
-                    sjadam.setPlayerColor(color);
-                    sjadam.setBlockSize(document.querySelector("#start-game-menu").offsetWidth);
-                    sjadam.setGameDiv(gameDiv);
-                    sjadam.setIsOnlineGame(true);
-                    menuStartGame.classList.remove("active");
-
-                    // Init board and we're ready to play.
-                    sjadam.initChessBoard(function() {
-                        gameContainer.classList.remove("hidden");
-                        sjadam.setIsListHistory(true);
-                        sjadam.isPlaying = false;
-                    });
+                    startOnlineGame(color, document.querySelector("#start-game-menu"), false);
 
                     // Connect to socket and send gameId
                     connectSocket(res.data.gameId, () => {
-
+                        
                         // Ready state
-                        hideModal(false);
+                        hideModal("copy-game-url", false);
                         sjadam.isPlaying = true;
                     });
 
                     // Show modal (copy game url popup)
-                    showModal(res.data.url);
+                    txtNewGameUrl.value = res.data.url;
+                    showModal("copy-game-url");
                 }
             }
         };
         req.send("color=" + color + "&player_id=" + localStorage.playerId);
     });
     modal = document.querySelector(".modal");
-    copyGameUrlBox = document.querySelector("#copy-game-url");
+
+    // New game modal
+    txtNewGameUrl = document.querySelector("#new-game-url");
+    document.querySelector("#copy-new-url").addEventListener("click", () => {
+        txtNewGameUrl.select();
+        document.execCommand("copy");
+    });
+    document.querySelector("#cancel-game").addEventListener("click", () => {
+        hideModal("copy-game-url", true);
+    });
+
+    // Game over modal
+    gameOverTitle = document.querySelector("#game-over .title");
+    gameOverSpan = document.querySelector("#game-over #won-lost");
     txtGameUrl = document.querySelector("#game-url");
-    btnCopyToClipboard = document.querySelector("#copy-url");
-    btnCopyToClipboard.addEventListener("click", () => {
+    btnRequestRematch = document.querySelector("#request-rematch");
+    btnRequestRematch.addEventListener("click", () => {
+
+        // TODO: Send rematch request to opponent.
+    });
+    document.querySelector("#copy-url").addEventListener("click", () => {
         txtGameUrl.select();
         document.execCommand("copy");
     });
-    btnCancelGame = document.querySelector("#cancel-game");
-    btnCancelGame.addEventListener("click", () => {
-        hideModal(true);
+    document.querySelector(".close").addEventListener("click", () => {
+        hideModal("game-over", false);
     });
 
     checkUrlParamter();
@@ -209,7 +218,7 @@ function checkUrlParamter() {
                             connectSocket(gameId, () => {
 
                                 // Ready state
-                                startOnlineGame(res.data.color);
+                                startOnlineGame(res.data.color, menuMain, true);
                             });
                         }
                     }
@@ -220,35 +229,57 @@ function checkUrlParamter() {
     }
 }
 
-function showModal(gameUrl) {
-    txtGameUrl.value = gameUrl;
+function showModal(id) {
+
+    // Add hidden to other modal-boxes and remove from this.
+    let modalBox;
+    let modalBoxes = document.querySelectorAll(".modal-box");
+    for (let i = 0; i < modalBoxes.length; i++) {
+        let mb = modalBoxes[i];
+        if (mb.id == id) {
+            modalBox = mb;
+            modalBox.classList.remove("hidden");
+        } else {
+            mb.classList.add("hidden");
+        }
+    }
     modal.classList.remove("fadeout");
     modal.classList.add("fadein");
-    copyGameUrlBox.classList.remove("to-top");
-    copyGameUrlBox.classList.add("from-top");
+    modalBox.classList.remove("to-top");
+    modalBox.classList.add("from-top");
 }
 
-function hideModal(dc) {
+function hideModal(id, dc) {
     if (dc && socket != undefined && socket.connected) socket.disconnect();
-    copyGameUrlBox.classList.add("to-top");
-    copyGameUrlBox.classList.remove("from-top");
+    let modalBox = document.querySelector("#" + id);
+    modalBox.classList.add("to-top");
+    modalBox.classList.remove("from-top");
     modal.classList.add("fadeout");
     modal.classList.remove("fadein");
 }
 
-function startOnlineGame(color) {
+function startOnlineGame(color, curDiv, isPlaying) {
 
     // Creating game for opponent
     sjadam.setPlayerColor(color);
-    sjadam.setBlockSize(menuMain.offsetWidth);
+    sjadam.setBlockSize(curDiv.offsetWidth);
     sjadam.setGameDiv(gameDiv);
     sjadam.setIsOnlineGame(true);
-    menuMain.classList.remove("active");
+    sjadam.setGameOverCallback(() => {
+
+        // Set modal info
+        let won = sjadam.colorWon == color;
+        gameOverTitle.innerHTML = won ? "Victory!" : "Defeat!";
+        gameOverSpan.innerHTML = won ? "won" : "lost";
+        // TODO: txtGameUrl.value = "";
+        showModal("game-over");
+    });
+    curDiv.classList.remove("active");
 
     // Init board and we're ready to play.
     sjadam.initChessBoard(function() {
         gameContainer.classList.remove("hidden");
         sjadam.setIsListHistory(true);
-        sjadam.isPlaying = true;
+        sjadam.isPlaying = isPlaying;
     });
 }

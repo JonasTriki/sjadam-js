@@ -394,6 +394,10 @@ html, body {
     max-width: 700px;
 }
 
+.modal-box.hidden {
+    display: none;
+}
+
 .modal-box.from-top {
     animation: modal-box-from-top 1s 0.5s;
     animation-fill-mode: forwards;

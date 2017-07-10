@@ -93,7 +93,7 @@ class Sjadam {
     addHistory(notation, emit) {
         if (!this.isListHistory) return; // Check if we should add to history
         if (this.turn == "w") {
-            this.appendHistoryDiv(notation, "");
+            this.appendHistoryDiv(notation, this.colorWon ? "---" : "");
         } else {
             let i = this.history.length - 1;
             this.history[i].opponent = notation;
@@ -101,15 +101,21 @@ class Sjadam {
             // Get children at pos i and its children at pos 2 (aka opponent turn).
             this.listDiv.children[i].children[2].innerHTML = notation;
         }
-        if (this.colorWon) {
+        this.addGameOverHistory();
+        if (emit) this.emitData({type: "history", notation: notation});
+    }
+
+    addGameOverHistory() {
+        if (this.isListHistory && this.colorWon) {
             let whiteWon = this.colorWon == "w" ? 1 : 0;
             let blackWon = 1 - whiteWon;
-            let i = this.history.length - 1;
-            this.listDiv.children[i].children[1].innerHTML = whiteWon;
-            this.listDiv.children[i].children[2].innerHTML = blackWon;
-            //this.colorWon = undefined;
+            if (this.colorWon == "w") {
+                let i = this.history.length - 1;
+                this.history[i].opponent = "---";
+                this.listDiv.children[i].children[2].innerHTML = "---";
+            }
+            this.appendHistoryDiv(whiteWon, blackWon);
         }
-        if (emit) this.emitData({type: "history", notation: notation});
     }
 
     mouseUp(e) {
@@ -127,7 +133,9 @@ class Sjadam {
         if (this.isOnline && this.turn != this.playerColor) return;
 
         // Check if we can select the piece (right color).
-        let piece = this.chessboard[this.hoverPos.y][this.hoverPos.x].piece;
+        let mouseX = this.hoverPos.x;
+        let mouseY = this.hoverPos.y;
+        let piece = this.chessboard[mouseY][mouseX].piece;
         let isOpponent = this.isPieceOpponent(piece);
 
         // Check if we are clicking on a move, and move if possible.
@@ -135,15 +143,12 @@ class Sjadam {
         let canDoSjadamMove = this.sjadamMoves.filter((a) => this.checkPos(a)).length;
         let canChangePiece = (this.sjadamPiece.x == -1 && this.sjadamPiece.y == -1) || !this.hasSjadamPieceMoved();
         if (canDoChessMove || canDoSjadamMove)  {
-            let anOpts = {fromPos: {x: this.selectedPos.x, y: this.selectedPos.y}, toPos: {x: this.hoverPos.x, y: this.hoverPos.y}};
+            let originPos = {x: this.sjadamPiece.x, y: this.sjadamPiece.y};
+            let anOpts = {fromPos: {x: this.selectedPos.x, y: this.selectedPos.y}, toPos: {x: mouseX, y: mouseY}};
             let an = this.toAN(anOpts);
-            this.movePiece(this.selectedPos.x, this.selectedPos.y, this.hoverPos.x, this.hoverPos.y);
-            if (!this.isPlaying) {
-                this.addHistory(an, true); // Add last move to history.
-                return;
-            }
+            this.movePiece(this.selectedPos.x, this.selectedPos.y, mouseX, mouseY);
             if (e.button == 2 || canDoChessMove) {
-                if (canDoChessMove) {
+                if (canDoChessMove && this.isPlaying) {
                     let chessMove = this.chessMoves.filter((a) => this.checkPos(a))[0];
                     if (chessMove.castling) {
                         anOpts.castling = chessMove.castling;
@@ -164,15 +169,27 @@ class Sjadam {
                 } else {
                     this.pawnTwoSteps = false;
                 }
-                this.checkQueen(this.hoverPos.x, this.hoverPos.y);
+                let promotion = this.checkQueen(mouseX, mouseY);
 
                 // Add to history if possible
                 this.addHistory(an, true);
 
-                // Emit data to socket if needed.
-                this.emitData({type: "move", x: this.sjadamPiece.x, y: this.sjadamPiece.y, dX: this.hoverPos.x, dY: this.hoverPos.y});
-                this.switchTurn();
-                this.emitData({type: "turn"});
+                // Emit data to socket if needed
+                let moveData = {type: "move", x: originPos.x, y: originPos.y, dX: mouseX, dY: mouseY};
+                if (promotion) moveData.promotion = {x: promotion.x, y: promotion.y, piece: promotion.piece};
+                this.emitData(moveData);
+
+                // Check if we won
+                if (!this.isPlaying) {
+
+                    // Emit game-over
+                    this.emitData({type: "game-over", colorWon: this.colorWon});
+                } else {
+
+                    // Else switch turn.
+                    this.switchTurn();
+                    this.emitData({type: "turn"});
+                }
                 return;
             }
 
@@ -189,14 +206,14 @@ class Sjadam {
             if (isOpponent || !canChangePiece) return;
 
             // Change sjadam piece.
-            this.sjadamPiece.x = this.hoverPos.x;
-            this.sjadamPiece.y = this.hoverPos.y;
+            this.sjadamPiece.x = mouseX;
+            this.sjadamPiece.y = mouseY;
             this.sjadamPiece.piece = piece;
         }
 
         // Set clicked position to draw and sjadam piece destination position.
-        this.selectedPos.x = this.hoverPos.x;
-        this.selectedPos.y = this.hoverPos.y;
+        this.selectedPos.x = mouseX;
+        this.selectedPos.y = mouseY;
         this.setSelectedPos();
         this.sjadamPiece.dX = this.selectedPos.x;
         this.sjadamPiece.dY = this.selectedPos.y;
@@ -259,12 +276,19 @@ class Sjadam {
         return "";
     }
 
+    gameOver(colorWon) {
+        this.isPlaying = false;
+        this.colorWon = colorWon;
+        this.clearPiece();
+        if (this.gameOverCallback != null) {
+            this.gameOverCallback();
+        }
+    }
+
     checkKing(moveX, moveY) {
         let destPiece = this.chessboard[moveY][moveX].piece;
         if (destPiece.length == 2 && destPiece.charAt(0) == "k") {
-            this.isPlaying = false;
-            this.colorWon = destPiece.slice(-1) == "w" ? "b" : "w";
-            this.clearPiece();
+            this.gameOver(destPiece.slice(-1) == "w" ? "b" : "w");
         }
     }
 
@@ -273,15 +297,21 @@ class Sjadam {
         if (piece.charAt(0) == "q" || (piece.charAt(0) == "k" && piece.length == 2)) return;
 
         // Find color and check if we should convert to queen
-        let color = piece.slice(-1);
         let convertToQueen = (this.turn == this.playerColor && moveY == 0) || (this.turn != this.playerColor && moveY == 7);
-        if (!convertToQueen) return;
+        if (!convertToQueen) return null;
 
-        // Convert piece to queen
-        let newPiece = "q" + color;
-        this.chessboard[moveY][moveX].piece = newPiece;
-        this.chessboard[moveY][moveX].elem.classList.remove(piece);
-        this.chessboard[moveY][moveX].elem.classList.add(newPiece);
+        // Promote piece to queen
+        this.promotePiece(moveX, moveY, piece);
+
+        // Return data for emitting data
+        return {x: moveX, y: moveY, piece: piece};
+    }
+
+    promotePiece(x, y, piece) {
+        let newPiece = "q" + piece.slice(-1);
+        this.chessboard[y][x].piece = newPiece;
+        this.chessboard[y][x].elem.classList.remove(piece);
+        this.chessboard[y][x].elem.classList.add(newPiece);
     }
 
     emitData(data) {
@@ -296,12 +326,24 @@ class Sjadam {
         console.log("Recieved data", data);
         if (data.type == "move") {
             this.movePiece(data.x, data.y, data.dX, data.dY);
+
+            // Check if we also need to promote the moved piece.
+            if (data.promotion) {
+                this.promotePiece(data.promotion.x, data.promotion.y, data.promotion.piece);
+            }
         } else if (data.type == "remove") {
             this.removePiece(data.x, data.y);
         } else if (data.type == "turn") {
             this.switchTurn();
         } else if (data.type == "history") {
             this.addHistory(data.notation, false);
+        } else if (data.type == "game-over") {
+            this.gameOver(data.colorWon);
+            this.addGameOverHistory();
+            if (this.isOnline) {
+
+                // TODO: show modal(?)
+            }
         }
     }
 
@@ -532,6 +574,10 @@ class Sjadam {
         this.isOnline = isOnline;
     }
 
+    setGameOverCallback(cb) {
+        this.gameOverCallback = cb;
+    }
+
     setSocket(socket) {
         this.socket = socket;
     }
@@ -569,6 +615,7 @@ class Sjadam {
     }
 
     initChessBoard(cb) {
+        this.colorWon = "";
         this.clearBoardDivs();
         this.chessboard = [];
         for (let y = 0; y < 8; y++) {
@@ -627,6 +674,7 @@ class Sjadam {
         if (this.isListHistory) {
             this.initChessBoard(() => {
                 this.clearPiece();
+                this.colorWon = "";
                 this.turn = this.playerColor;
                 this.updateTurn();
                 this.isPlaying = true;
