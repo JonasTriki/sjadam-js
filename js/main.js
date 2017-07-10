@@ -12,12 +12,14 @@ function init() {
     sjadam.setListDiv(divGameList);
 
     // Game info footer buttons
-    document.querySelector("#quit-game").addEventListener("click", () => {
-        sjadam.clearGame();
-        gameContainer.classList.add("hidden");
-        menuMain.classList.add("active");
-    });
+    document.querySelector("#quit-game").addEventListener("click", quitGame);
     document.querySelector("#reset-board").addEventListener("click", () => {
         sjadam.reset();
     });
+}
+
+function quitGame() {
+    sjadam.clearGame();
+    gameContainer.classList.add("hidden");
+    menuMain.classList.add("active");
 }

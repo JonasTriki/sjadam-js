@@ -136,7 +136,7 @@ function initMenu(sjadammatts) {
 
                     // Connect to socket and send gameId
                     connectSocket(res.data.gameId, () => {
-                        
+
                         // Ready state
                         hideModal("copy-game-url", false);
                         sjadam.isPlaying = true;
@@ -265,11 +265,11 @@ function startOnlineGame(color, curDiv, isPlaying) {
     sjadam.setBlockSize(curDiv.offsetWidth);
     sjadam.setGameDiv(gameDiv);
     sjadam.setIsOnlineGame(true);
-    sjadam.setGameOverCallback(() => {
+    sjadam.setGameOverCallback((dc) => {
 
         // Set modal info
         let won = sjadam.colorWon == color;
-        gameOverTitle.innerHTML = won ? "Victory!" : "Defeat!";
+        gameOverTitle.innerHTML = (dc ? "Opponent left the game. " : "") + won ? "Victory!" : "Defeat!";
         gameOverSpan.innerHTML = won ? "won" : "lost";
         // TODO: txtGameUrl.value = "";
         showModal("game-over");

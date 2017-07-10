@@ -19,7 +19,7 @@ To try the game out yourself, check out [sjadam.no](https://sjadam.no/)!
 # Todo-list
 - ~~Add game-over screen.~~
 - Online
-    - Respond to opponent disconnections.
+    - ~~Respond to opponent disconnections.~~
     - ~~Add promotion communcation between clients.~~
     - Remove reset button/Replace with "Give up" button.
     - Chat (?)

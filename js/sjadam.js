@@ -109,8 +109,8 @@ class Sjadam {
         if (this.isListHistory && this.colorWon) {
             let whiteWon = this.colorWon == "w" ? 1 : 0;
             let blackWon = 1 - whiteWon;
-            if (this.colorWon == "w") {
-                let i = this.history.length - 1;
+            let i = this.history.length - 1;
+            if (this.colorWon == "w" && i > -1 && this.history[i].player != "") {
                 this.history[i].opponent = "---";
                 this.listDiv.children[i].children[2].innerHTML = "---";
             }
@@ -276,19 +276,19 @@ class Sjadam {
         return "";
     }
 
-    gameOver(colorWon) {
+    gameOver(colorWon, opponentDc) {
         this.isPlaying = false;
         this.colorWon = colorWon;
         this.clearPiece();
         if (this.gameOverCallback != null) {
-            this.gameOverCallback();
+            this.gameOverCallback(opponentDc);
         }
     }
 
     checkKing(moveX, moveY) {
         let destPiece = this.chessboard[moveY][moveX].piece;
         if (destPiece.length == 2 && destPiece.charAt(0) == "k") {
-            this.gameOver(destPiece.slice(-1) == "w" ? "b" : "w");
+            this.gameOver(destPiece.slice(-1) == "w" ? "b" : "w", false);
         }
     }
 
@@ -338,12 +338,11 @@ class Sjadam {
         } else if (data.type == "history") {
             this.addHistory(data.notation, false);
         } else if (data.type == "game-over") {
-            this.gameOver(data.colorWon);
+            this.gameOver(data.colorWon, false);
             this.addGameOverHistory();
-            if (this.isOnline) {
-
-                // TODO: show modal(?)
-            }
+        } else if (data.type == "opponent-dc") {
+            this.gameOver(this.playerColor, true);
+            this.addGameOverHistory();
         }
     }
 
@@ -689,6 +688,10 @@ class Sjadam {
         this.clearPiece();
         this.clearBoardDivs();
         this.clearListDivs();
+        if (this.isOnline && this.socket != undefined) {
+            this.socket.disconnect();
+            this.socket = undefined;
+        }
     }
 
     clearPiece() {
