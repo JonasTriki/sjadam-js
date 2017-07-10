@@ -160,6 +160,7 @@ function initMenu(sjadammatts) {
     });
     document.querySelector("#cancel-game").addEventListener("click", () => {
         hideModal("copy-game-url", true);
+        quitGame();
     });
 
     // Game over modal
