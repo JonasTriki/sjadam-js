@@ -10,10 +10,9 @@ class Sjadam {
     }
 
     mouseMove(e) {
-        let newX = ~~((e.clientX - this.gameDiv.offsetLeft) / this.blockSize);
-        let newY = ~~((e.clientY - this.gameDiv.offsetTop) / this.blockSize);
+        let newX = ~~((e.pageX - this.gameDiv.offsetLeft) / this.blockSize);
+        let newY = ~~((e.pageY - this.gameDiv.offsetTop) / this.blockSize);
         if (newX != this.hoverPos.x || newY != this.hoverPos.y) {
-            document.title = "(" + newX + "," + newY + ")";
             this.hoverPos.x = newX;
             this.hoverPos.y = newY;
         }
@@ -119,6 +118,7 @@ class Sjadam {
     }
 
     mouseUp(e) {
+        console.log(e);
         if (!this.isPlaying) return;
         if (this.hoverPos.x == -1 && this.hoverPos.y == -1) return;
 
