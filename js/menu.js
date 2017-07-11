@@ -17,7 +17,12 @@ let menuMain, menuStartGame, gameContainer, gameDiv, gameInfo;
 let btnNewGame, btnDailyChallenges, btnPlayVsFriend;
 let btnWhite, btnBlack, btnStartGame;
 let modal, txtNewGameUrl;
-let gameOverTitle, gameOverSpan, txtGameUrl, btnRequestRematch;
+let gameOverTitle, gameOverSpan, txtGameUrl, loaderRematch, btnRequestRematch;
+
+// 0 = No rematch requested
+// 1 = Player requested rematch
+// 2 = Opponent requested rematch
+let rematch = 0;
 
 // Create sjadam instance
 let sjadam = new Sjadam();
@@ -25,7 +30,13 @@ let sjadam = new Sjadam();
 // Socket.IO game socket.
 let socket;
 
-function connectSocket(gameId, readyState) {
+function restartMatch() {
+    hideModal("game-over", false);
+    rematch = 0;
+    sjadam.reset(false);
+}
+
+function connectSocket(gameId, readyState, restartState) {
     socket = io.connect(API_LINK);
     socket.on("connect", (data) => {
         sjadam.setSocket(socket);
@@ -36,7 +47,29 @@ function connectSocket(gameId, readyState) {
             case "state":
                 if (data.msg == "ready") {
                     readyState();
+                } else if (data.msg == "restart") {
+
+                    // Accept rematch, start game
+                    restartMatch();
                 }
+                break;
+            case "request-rematch":
+                btnRequestRematch.classList.add("pulse");
+                btnRequestRematch.innerHTML = "Opponent wants rematch. Accept?";
+                if (rematch == 1) {
+
+                    // Rare case, both clients send request, just accept rematch.
+                    restartMatch();
+                } else {
+                    rematch = 2;
+                }
+                break;
+            case "decline-rematch":
+
+                // Decline rematch
+                btnRequestRematch.classList.remove("pulse");
+                btnRequestRematch.innerHTML = "Rematch declined";
+                rematch = 0;
                 break;
             default:
                 sjadam.socketData(data);
@@ -167,16 +200,36 @@ function initMenu(sjadammatts) {
     gameOverTitle = document.querySelector("#game-over .title");
     gameOverSpan = document.querySelector("#game-over #won-lost");
     txtGameUrl = document.querySelector("#game-url");
+    loaderRematch = document.querySelector(".loader");
     btnRequestRematch = document.querySelector("#request-rematch");
     btnRequestRematch.addEventListener("click", () => {
+        switch (rematch) {
+            case 0:
+                loaderRematch.classList.remove("hidden");
+                btnRequestRematch.innerHTML = "Requested rematch";
 
-        // TODO: Send rematch request to opponent.
+                // Send rematch request to opponent.
+                sjadam.emitData({type: "request-rematch"});
+                rematch = 1;
+                break;
+            case 2:
+
+                // We accept rematch, send it to server and wait for server
+                // to send to both clients to start the game.
+                sjadam.emitData({type: "accept-rematch"});
+                break;
+        }
     });
     document.querySelector("#copy-url").addEventListener("click", () => {
         txtGameUrl.select();
         document.execCommand("copy");
     });
     document.querySelector(".close").addEventListener("click", () => {
+        if (rematch == 2) {
+
+            // Decline rematch
+            sjadam.emitData({type: "decline-rematch"});
+        }
         hideModal("game-over", false);
     });
 
@@ -270,8 +323,17 @@ function startOnlineGame(color, curDiv, isPlaying) {
 
         // Set modal info
         let won = sjadam.colorWon == color;
-        gameOverTitle.innerHTML = (dc ? "Opponent left the game. " : "") + won ? "Victory!" : "Defeat!";
+        gameOverTitle.innerHTML = (dc ? "Opponent left the game. " : "") + (won ? "Victory!" : "Defeat!");
         gameOverSpan.innerHTML = won ? "won" : "lost";
+        loaderRematch.classList.add("hidden");
+        if (dc) {
+            btnRequestRematch.classList.add("hidden");
+        } else {
+            btnRequestRematch.classList.remove("hidden");
+        }
+        btnRequestRematch.classList.remove("pulse");
+        btnRequestRematch.innerHTML = "Request rematch";
+
         // TODO: txtGameUrl.value = "";
         showModal("game-over");
     });

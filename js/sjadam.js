@@ -118,7 +118,6 @@ class Sjadam {
     }
 
     mouseUp(e) {
-        console.log(e);
         if (!this.isPlaying) return;
         if (this.hoverPos.x == -1 && this.hoverPos.y == -1) return;
 
@@ -328,25 +327,35 @@ class Sjadam {
 
     socketData(data) {
         console.log("Recieved data", data);
-        if (data.type == "move") {
-            this.movePiece(data.x, data.y, data.dX, data.dY);
+        switch (data.type) {
+            case "move":
+                this.movePiece(data.x, data.y, data.dX, data.dY);
 
-            // Check if we also need to promote the moved piece.
-            if (data.promotion) {
-                this.promotePiece(data.promotion.x, data.promotion.y, data.promotion.piece);
-            }
-        } else if (data.type == "remove") {
-            this.removePiece(data.x, data.y);
-        } else if (data.type == "turn") {
-            this.switchTurn();
-        } else if (data.type == "history") {
-            this.addHistory(data.notation, false);
-        } else if (data.type == "game-over") {
-            this.gameOver(data.colorWon, false);
-            this.addGameOverHistory();
-        } else if (data.type == "opponent-dc") {
-            this.gameOver(this.playerColor, true);
-            this.addGameOverHistory();
+                // Check if we also need to promote the moved piece.
+                if (data.promotion) {
+                    this.promotePiece(data.promotion.x, data.promotion.y, data.promotion.piece);
+                }
+                break;
+            case "remove":
+                this.removePiece(data.x, data.y);
+                break;
+            case "turn":
+                this.switchTurn();
+                break;
+            case "history":
+                this.addHistory(data.notation, false);
+                break;
+            case "game-over":
+                this.gameOver(data.colorWon, false);
+                this.addGameOverHistory();
+                break;
+            case "opponent-dc":
+                this.gameOver(this.playerColor, true);
+                this.addGameOverHistory();
+
+                // TODO: Remove rematch button from client as the opponent disconnected.
+                // =>  No game to restart.
+                break;
         }
     }
 
@@ -671,14 +680,14 @@ class Sjadam {
         return this.sjadamPiece.x != this.sjadamPiece.dX || this. sjadamPiece.y != this.sjadamPiece.dY;
     }
 
-    reset() {
+    reset(turnPlayerColor) {
         // TODO: fix/remove reset for when this.isOnline == true.
         this.pawnTwoSteps = false;
         if (this.isListHistory) {
             this.initChessBoard(() => {
                 this.clearPiece();
                 this.colorWon = "";
-                this.turn = this.playerColor;
+                this.turn = turnPlayerColor ? this.playerColor : "w";
                 this.updateTurn();
                 this.isPlaying = true;
                 this.clearListDivs();

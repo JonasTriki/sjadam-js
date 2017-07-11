@@ -517,3 +517,28 @@ html, body {
 .modal-box .footer .btn.color:focus {
     background: #1261d1;
 }
+
+.loader {
+    width: 24px;
+    background: url(img/loader.gif) no-repeat center;
+    background-size: contain;
+}
+
+.btn.pulse {
+    animation: pulse-amin 2s infinite;
+}
+
+@keyframes pulse-amin {
+    0% {
+        background-color: #1f70e1;
+        box-shadow: 0 0 0 #ccc;
+    }
+    50% {
+        background-color: #8c4c88;
+        box-shadow: 0 0 7px 3px #ccc;
+    }
+    100% {
+        background-color: #1f70e1;
+        box-shadow: 0 0 0 #ccc;
+    }
+}

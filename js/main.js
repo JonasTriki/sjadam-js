@@ -14,7 +14,7 @@ function init() {
     // Game info footer buttons
     document.querySelector("#quit-game").addEventListener("click", quitGame);
     document.querySelector("#reset-board").addEventListener("click", () => {
-        sjadam.reset();
+        sjadam.reset(true);
     });
 }
 
