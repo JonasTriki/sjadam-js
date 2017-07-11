@@ -321,6 +321,10 @@ function startOnlineGame(color, curDiv, isPlaying) {
     sjadam.setIsOnlineGame(true);
     sjadam.setGameOverCallback((dc) => {
 
+        // We don't want anything to happend when opponent disconnects when
+        // the game already is over.
+        if (!sjadam.isPlaying && dc) return;
+
         // Set modal info
         let won = sjadam.colorWon == color;
         gameOverTitle.innerHTML = (dc ? "Opponent left the game. " : "") + (won ? "Victory!" : "Defeat!");
