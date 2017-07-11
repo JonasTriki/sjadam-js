@@ -26,7 +26,7 @@ To try the game out yourself, check out [sjadam.no](https://sjadam.no/)!
 - Look through recently played games (?)
 
 # Known bugs
-None so far!
+~~It is possible to end your turn by jumping back to your starting position.~~
 
 # License
 - The chess pieces are taken from [Wikimedia](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces) and licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).

@@ -147,7 +147,11 @@ class Sjadam {
             let anOpts = {fromPos: {x: this.selectedPos.x, y: this.selectedPos.y}, toPos: {x: mouseX, y: mouseY}};
             let an = this.toAN(anOpts);
             this.movePiece(this.selectedPos.x, this.selectedPos.y, mouseX, mouseY);
-            if (e.button == 2 || canDoChessMove) {
+
+            // Check if we are attempting to sjadam back to starting position and end the turn there.
+            // => If so, deny end of turn.
+            let sjadamBack = e.button == 2 && canDoSjadamMove && mouseX == this.sjadamPiece.x && mouseY == this.sjadamPiece.y;
+            if ((e.button == 2 || canDoChessMove) && !sjadamBack) {
                 if (canDoChessMove && this.isPlaying) {
                     let chessMove = this.chessMoves.filter((a) => this.checkPos(a))[0];
                     if (chessMove.castling) {
@@ -155,8 +159,8 @@ class Sjadam {
                         an = this.toAN(anOpts);
 
                         // Move rook
-                        this.movePiece(cast.rookX, cast.rookY, cast.dX, cast.rookY);
-                        this.emitData({type: "move", x: cast.rookX, y: cast.rookY, dX: cast.dX, dY: cast.rookY});
+                        this.movePiece(anOpts.castling.rookX, anOpts.castling.rookY, anOpts.castling.dX, anOpts.castling.rookY);
+                        this.emitData({type: "move", x: anOpts.castling.rookX, y: anOpts.castling.rookY, dX: anOpts.castling.dX, dY: anOpts.castling.rookY});
                     } else if (chessMove.enPassant) {
                         anOpts.enPassant = true; // Make sure we add the en passant suffix on the notation!
                         an = this.toAN(anOpts);
