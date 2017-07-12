@@ -186,7 +186,7 @@ class Sjadam {
                 if (!this.isPlaying) {
 
                     // Emit game-over
-                    this.emitData({type: "game-over", colorWon: this.colorWon});
+                    this.emitData({type: "game-over", colorWon: this.colorWon, quit: false});
                 } else {
 
                     // Else switch turn.
@@ -279,19 +279,19 @@ class Sjadam {
         return "";
     }
 
-    gameOver(colorWon, opponentDc) {
+    gameOver(colorWon, opponentDc, quit) {
         this.isPlaying = false;
         this.colorWon = colorWon;
         this.clearPiece();
         if (this.gameOverCallback != null) {
-            this.gameOverCallback(opponentDc);
+            this.gameOverCallback(opponentDc, quit);
         }
     }
 
     checkKing(moveX, moveY) {
         let destPiece = this.chessboard[moveY][moveX].piece;
         if (destPiece.length == 2 && destPiece.charAt(0) == "k") {
-            this.gameOver(destPiece.slice(-1) == "w" ? "b" : "w", false);
+            this.gameOver(destPiece.slice(-1) == "w" ? "b" : "w", false, false);
         }
     }
 
@@ -346,11 +346,12 @@ class Sjadam {
                 this.addHistory(data.notation, false);
                 break;
             case "game-over":
-                this.gameOver(data.colorWon, false);
+                this.gameOver(data.colorWon, false, data.quit);
                 this.addGameOverHistory();
                 break;
             case "opponent-dc":
-                this.gameOver(this.playerColor, true);
+                if (!this.isPlaying) break;
+                this.gameOver(this.playerColor, true, false);
                 this.addGameOverHistory();
 
                 // TODO: Remove rematch button from client as the opponent disconnected.
@@ -680,8 +681,19 @@ class Sjadam {
         return this.sjadamPiece.x != this.sjadamPiece.dX || this. sjadamPiece.y != this.sjadamPiece.dY;
     }
 
+    resign(quit) {
+        if (!this.isPlaying) return;
+        let colorWon = this.playerColor == "w" ? "b" : "w";
+
+        // We don't want to show modal if player quits game.
+        if (!quit) {
+            this.gameOver(colorWon, false, false);
+            this.addGameOverHistory();
+        }
+        this.emitData({type: "game-over", colorWon: colorWon, quit: quit});
+    }
+
     reset(turnPlayerColor) {
-        // TODO: fix/remove reset for when this.isOnline == true.
         this.pawnTwoSteps = false;
         if (this.isListHistory) {
             this.initChessBoard(() => {

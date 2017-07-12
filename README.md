@@ -21,7 +21,7 @@ To try the game out yourself, check out [sjadam.no](https://sjadam.no/)!
 - Online
     - ~~Respond to opponent disconnections.~~
     - ~~Add promotion communcation between clients.~~
-    - Remove reset button/Replace with "Give up" button.
+    - ~~Remove reset button/Replace with "Resign" button.~~
     - Chat (?)
 - Look through recently played games (?)
 

@@ -67,6 +67,7 @@ function connectSocket(gameId, readyState, restartState) {
             case "decline-rematch":
 
                 // Decline rematch
+                loaderRematch.classList.add("hidden");
                 btnRequestRematch.classList.remove("pulse");
                 btnRequestRematch.innerHTML = "Rematch declined";
                 rematch = 0;
@@ -102,6 +103,7 @@ function initMenu(sjadammatts) {
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
         sjadam.setGameOverCallback(null);
+        resignFooter(false);
         menuMain.classList.remove("active");
 
         // Load game and view game.
@@ -136,6 +138,7 @@ function initMenu(sjadammatts) {
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
         sjadam.setGameOverCallback(null);
+        resignFooter(false);
         menuStartGame.classList.remove("active");
 
         // Init board and we're ready to play.
@@ -319,7 +322,8 @@ function startOnlineGame(color, curDiv, isPlaying) {
     sjadam.setBlockSize(curDiv.offsetWidth);
     sjadam.setGameDiv(gameDiv);
     sjadam.setIsOnlineGame(true);
-    sjadam.setGameOverCallback((dc) => {
+    resignFooter(true);
+    sjadam.setGameOverCallback((dc, quit) => {
 
         // We don't want anything to happend when opponent disconnects when
         // the game already is over.
@@ -330,7 +334,7 @@ function startOnlineGame(color, curDiv, isPlaying) {
         gameOverTitle.innerHTML = (dc ? "Opponent left the game. " : "") + (won ? "Victory!" : "Defeat!");
         gameOverSpan.innerHTML = won ? "won" : "lost";
         loaderRematch.classList.add("hidden");
-        if (dc) {
+        if (dc || quit) {
             btnRequestRematch.classList.add("hidden");
         } else {
             btnRequestRematch.classList.remove("hidden");
