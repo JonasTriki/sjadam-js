@@ -17,12 +17,13 @@ To try the game out yourself, check out [sjadam.no](https://sjadam.no/)!
 - If any piece except the king makes it all the way to the opponents side, it evolves into a queen.
 
 # Todo-list
+- Indicate where starting position of piece is.
 - ~~Add game-over screen.~~
 - Online
     - ~~Respond to opponent disconnections.~~
     - ~~Add promotion communcation between clients.~~
     - ~~Remove reset button/Replace with "Resign" button.~~
-    - Chat (?)
+    - ~~Chat~~
 - Look through recently played games (?)
 
 # Known bugs

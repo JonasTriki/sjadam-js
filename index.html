@@ -43,8 +43,24 @@
                             <div id="versus">vs.</div>
                             <div id="black-turn">Black</div>
                         </div>
-                        <div class="black-line"></div>
-                        <div id="list"></div>
+                        <div class="tabcontrol">
+                            <div class="headers">
+                                <div class="header light">History</div>
+                                <div class="header hidden">Sjadmmatts</div>
+                                <div class="header hidden">Chat</div>
+                            </div>
+                            <div class="pages light">
+                                <div class="page" id="history"></div>
+                                <div class="page hidden" id="sjadammatts"></div>
+                                <div class="page hidden" id="chat-page">
+                                    <div id="chat"></div>
+                                    <div id="chat-footer">
+                                        <input type="text" id="chat-msg" spellcheck="false" placeholder="Your message here...">
+                                        <div id="send-msg">Send</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div id="footer">
                             <div id="quit-game">Quit game</div>
                             <div id="reset-board">Reset</div>
@@ -61,7 +77,7 @@
                 </div>
                 <div class="content">
                     <div class="desc">Hand your friend the following URL:</div>
-                    <input type="text" id="new-game-url" value="" readonly \>
+                    <input type="text" id="new-game-url" spellcheck="false" value="" readonly>
                 </div>
                 <div class="footer">
                     <div class="btn color" id="copy-new-url">Copy to Clipboard</div>
@@ -75,7 +91,7 @@
                 </div>
                 <div class="content">
                     <div class="desc">You <span id="won-lost"></span>! If you would like to relive the game, check out the URL below.</div>
-                    <input type="text" id="game-url" value="Coming soon..." readonly \>
+                    <input type="text" id="game-url" spellcheck="false" value="Coming soon..." readonly>
                 </div>
                 <div class="footer">
                     <div class="loader hidden"></div>

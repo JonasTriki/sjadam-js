@@ -247,8 +247,9 @@ html, body {
 .piece.pb { background-image: url(img/pb.svg); }
 
 #top {
-    height: 70px;
+    height: 58px;
     display: flex;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.25);
 }
 
 #top > div:not(#versus) {
@@ -258,7 +259,7 @@ html, body {
 #top > div {
     color: #454545;
     font-size: 24px;
-    line-height: 70px;
+    line-height: 60px;
     text-align: center;
 }
 
@@ -266,15 +267,108 @@ html, body {
     font-weight: bold;
 }
 
-.black-line {
-    width: 100%;
-    height: 2px;
-    background: rgba(0, 0, 0, 0.25);
+.light {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
-#list {
-    height: calc(100% - 132px); /* 70px + 2px + 60px */
+.tabcontrol {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 120px); /* 60px + 60px */
+}
+
+.tabcontrol > .headers {
+    display: flex;
+    flex: none;
+    flex-direction: row;
+    justify-content: space-around;
+    height: 60px;
+}
+
+.tabcontrol > .headers > .header {
+    width: 100%;
+    color: #454545;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 60px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.tabcontrol > .pages {
+    display: flex;
+    height: 100%;
+}
+
+.tabcontrol > .pages > .page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     overflow-y: auto;
+    flex: 1;
+}
+
+.tabcontrol > .pages > .page.hidden {
+    display: none;
+}
+
+.page #chat {
+    flex: 1;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.page #chat > div:first-of-type {
+    margin-top: 10px;
+}
+
+#chat-page {
+    overflow: hidden;
+}
+
+#chat .message {
+    color: #fafafa;
+    font-size: 18px;
+    background: rgba(140, 76, 136, 0.5);
+    margin: 5px 10px 5px 25%;
+    padding: 5px;
+    clear: both;
+    word-break: break-all;
+    float: right;
+}
+
+#chat .message.left {
+    color: #454545;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 5px 25% 5px 10px;
+    float: left;
+}
+
+.page #chat-footer {
+    flex: none;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.page #chat-footer input {
+    width: 100%;
+    padding: 0 15px;
+    border: 0;
+    font-size: 18px;
+    color: #454545;
+    background-color: transparent;
+}
+
+.page #chat-footer #send-msg {
+    color: #454545;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 60px;
+    padding: 0 15px;
+    cursor: pointer;
 }
 
 .item {

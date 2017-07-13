@@ -21,7 +21,7 @@ class Sjadam {
     getSelectedDay() {
         let sel = document.querySelector(".item.day.selected");
         if (sel == null) return -1;
-        let children = Array.prototype.slice.call(document.querySelector("#list").children);
+        let children = Array.prototype.slice.call(this.sjadammattsDiv.children);
         return children.indexOf(sel);
     }
 
@@ -52,7 +52,7 @@ class Sjadam {
             if (i == 0) item.classList.add("selected"); // Select last day
             item.innerHTML = "Day " + day;
             item.addEventListener("click", () => {this.dayItemClicked(item)});
-            this.listDiv.appendChild(item);
+            this.sjadammattsDiv.appendChild(item);
         }
     }
 
@@ -86,11 +86,11 @@ class Sjadam {
         item.appendChild(turnNo);
         item.appendChild(playerTurn);
         item.appendChild(opponentTurn);
-        this.listDiv.appendChild(item);
+        this.historyDiv.appendChild(item);
     }
 
     addHistory(notation, emit) {
-        if (!this.isListHistory) return; // Check if we should add to history
+        if (!this.useHistory) return; // Check if we should add to history
         if (this.turn == "w") {
             this.appendHistoryDiv(notation, this.colorWon ? "---" : "");
         } else {
@@ -98,20 +98,20 @@ class Sjadam {
             this.history[i].opponent = notation;
 
             // Get children at pos i and its children at pos 2 (aka opponent turn).
-            this.listDiv.children[i].children[2].innerHTML = notation;
+            this.historyDiv.children[i].children[2].innerHTML = notation;
         }
         this.addGameOverHistory();
         if (emit) this.emitData({type: "history", notation: notation});
     }
 
     addGameOverHistory() {
-        if (this.isListHistory && this.colorWon) {
+        if (this.useHistory && this.colorWon) {
             let whiteWon = this.colorWon == "w" ? 1 : 0;
             let blackWon = 1 - whiteWon;
             let i = this.history.length - 1;
             if (this.colorWon == "w" && i > -1 && this.history[i].player != "") {
                 this.history[i].opponent = "---";
-                this.listDiv.children[i].children[2].innerHTML = "---";
+                this.historyDiv.children[i].children[2].innerHTML = "---";
             }
             this.appendHistoryDiv(whiteWon, blackWon);
         }
@@ -344,6 +344,9 @@ class Sjadam {
                 break;
             case "history":
                 this.addHistory(data.notation, false);
+                break;
+            case "chat":
+                this.onChatMsgRecieved(data.msg);
                 break;
             case "game-over":
                 this.gameOver(data.colorWon, false, data.quit);
@@ -595,25 +598,46 @@ class Sjadam {
         this.socket = socket;
     }
 
-    setListDiv(listDiv) {
-        this.listDiv = listDiv;
+    setHistoryDiv(historyDiv) {
+        this.historyDiv = historyDiv;
     }
 
-    setIsListHistory(isHistory) {
-        this.isListHistory = isHistory;
-        if (this.isListHistory) this.history = [];
+    setSjadammattsDiv(sjadammattsDiv) {
+        this.sjadammattsDiv = sjadammattsDiv;
+    }
+
+    setChatDiv(chatDiv) {
+        this.chatDiv = chatDiv;
+    }
+
+    setOnChatMsgRecieved(cb) {
+        this.onChatMsgRecieved = cb;
+    }
+
+    setUseHistory(isHistory) {
+        this.useHistory = isHistory;
+        if (this.useHistory) this.history = [];
     }
 
     clearListDivs() {
-        while (this.listDiv.firstChild) {
-            this.listDiv.removeChild(this.listDiv.firstChild);
-        }
-        if (this.isListHistory) this.history = [];
+
+        // Clear history/sjadammatts tab
+        this.removeChildren(this.historyDiv);
+        if (this.useHistory) this.history = [];
+        this.removeChildren(this.sjadammattsDiv);
+    }
+
+    clearChat() {
+        this.removeChildren(this.chatDiv);
     }
 
     clearBoardDivs() {
-        while (this.gameDiv.firstChild) {
-            this.gameDiv.removeChild(this.gameDiv.firstChild);
+        this.removeChildren(this.gameDiv);
+    }
+
+    removeChildren(div) {
+        while (div.firstChild) {
+            div.removeChild(div.firstChild);
         }
     }
 
@@ -695,7 +719,7 @@ class Sjadam {
 
     reset(turnPlayerColor) {
         this.pawnTwoSteps = false;
-        if (this.isListHistory) {
+        if (this.useHistory) {
             this.initChessBoard(() => {
                 this.clearPiece();
                 this.colorWon = "";

@@ -103,11 +103,13 @@ function initMenu(sjadammatts) {
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
         sjadam.setGameOverCallback(null);
+        showTabHeaderOnly(1);
+        headerClick(1);
         resignFooter(false);
         menuMain.classList.remove("active");
 
         // Load game and view game.
-        sjadam.setIsListHistory(false);
+        sjadam.setUseHistory(false);
         sjadam.addSjadammattDays();
         sjadam.loadCurrentSjadammatt(() => {
             gameContainer.classList.remove("hidden");
@@ -138,13 +140,16 @@ function initMenu(sjadammatts) {
         sjadam.setGameDiv(gameDiv);
         sjadam.setIsOnlineGame(false);
         sjadam.setGameOverCallback(null);
+        showTabHeaderOnly(0);
+        //showTabHeader(2, true); // TODO: TEMP, remove.
+        headerClick(0);
         resignFooter(false);
         menuStartGame.classList.remove("active");
 
         // Init board and we're ready to play.
         sjadam.initChessBoard(function() {
             gameContainer.classList.remove("hidden");
-            sjadam.setIsListHistory(true);
+            sjadam.setUseHistory(true);
             sjadam.isPlaying = true;
         });
     });
@@ -322,6 +327,10 @@ function startOnlineGame(color, curDiv, isPlaying) {
     sjadam.setBlockSize(curDiv.offsetWidth);
     sjadam.setGameDiv(gameDiv);
     sjadam.setIsOnlineGame(true);
+    showTabHeader(0, true);
+    showTabHeader(1, false); // Hide sjadammatts
+    showTabHeader(2, true);
+    headerClick(0);
     resignFooter(true);
     sjadam.setGameOverCallback((dc, quit) => {
 
@@ -350,7 +359,7 @@ function startOnlineGame(color, curDiv, isPlaying) {
     // Init board and we're ready to play.
     sjadam.initChessBoard(function() {
         gameContainer.classList.remove("hidden");
-        sjadam.setIsListHistory(true);
+        sjadam.setUseHistory(true);
         sjadam.isPlaying = isPlaying;
     });
 }
