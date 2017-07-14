@@ -371,7 +371,7 @@ html, body {
     cursor: pointer;
 }
 
-.item {
+.item:not(.day) {
     height: 35px;
     display: flex;
 }
