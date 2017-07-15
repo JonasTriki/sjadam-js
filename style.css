@@ -177,7 +177,10 @@ html, body {
     position: relative;
     background-size: 25%;
     background-image: url(img/board-bg.png);
+    image-rendering: -moz-crisp-edges;         /* Firefox */
+    image-rendering: -o-crisp-edges;         /* Opera */
     image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;  /* IE (non-standard property) */
 }
 
 #game-info {
@@ -394,7 +397,7 @@ html, body {
 .item.day {
     padding: 10px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background-color 0.3s ease;
 }
 
 .item.day:not(.selected):hover {
