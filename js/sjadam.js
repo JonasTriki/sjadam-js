@@ -64,8 +64,8 @@ class Sjadam {
         let destPiece = this.chessboard[opts.toPos.y][opts.toPos.x].piece.charAt(0);
         let taking = (destPiece != "" || opts.enPassant) ? "x" : "";
         let letter = opts.enPassant ? "P" : ((originPiece != "p" || taking != "") ? originPiece.toUpperCase() : "");
-        let x = String.fromCharCode(97 + opts.toPos.x);
-        let y = 8 - opts.toPos.y;
+        let x = opts.playerColor == "w" ? String.fromCharCode(97 + opts.toPos.x) : String.fromCharCode(104 - opts.toPos.x);
+        let y = opts.playerColor == "w" ? 8 - opts.toPos.y : opts.toPos.y + 1;
         let epSuffix = opts.enPassant ? "e.p." : "";
         return letter + taking + x + y + epSuffix;
     }
@@ -143,7 +143,7 @@ class Sjadam {
         let canChangePiece = (this.sjadamPiece.x == -1 && this.sjadamPiece.y == -1) || !this.hasSjadamPieceMoved();
         if (canDoChessMove || canDoSjadamMove)  {
             let originPos = {x: this.sjadamPiece.x, y: this.sjadamPiece.y};
-            let anOpts = {fromPos: {x: this.selectedPos.x, y: this.selectedPos.y}, toPos: {x: mouseX, y: mouseY}};
+            let anOpts = {fromPos: {x: this.selectedPos.x, y: this.selectedPos.y}, toPos: {x: mouseX, y: mouseY}, playerColor: this.playerColor};
             let an = this.toAN(anOpts);
             this.movePiece(this.selectedPos.x, this.selectedPos.y, mouseX, mouseY);
 
